@@ -6,6 +6,7 @@
 #define DATA_SCRAPER
 
 #include <string>
+#include <logger.hpp>
 
 using namespace std;
 
@@ -25,14 +26,19 @@ public:
         MONTHLY,
         MONTHLY_ADJ,
         CURRENT_PRC,
-        SEARCH,
+        SEARCH
     };
 
-    void getStockData(string stockName, E_OperationType op);
+    DataScraper();
+    ~DataScraper();
+    string getStockData(string stockName, E_OperationType op);
+    string searchTicker(string searchFor);
 private:
-    string buildCommand(string stockName, string hostName, string request);
+    string buildUrl(string request);
     string buildRequest(string func, string stockName);
     string getFuncFromOp(E_OperationType op);
+
+    Logger *log;
 };
 
 }//namespace autoTrader

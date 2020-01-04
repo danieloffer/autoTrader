@@ -5,6 +5,9 @@
 #include <data_scraper.hpp>
 #include <string.h>
 #include <iostream>
+#include <stdlib.h>
+#include <curl/curl.h>
+#include <sstream>
 
 using namespace std;
 
@@ -14,21 +17,77 @@ namespace autoTrader
 #define DATA_SOURCE "https://www.alphavantage.co/"
 #define API_KEY "5BCBTE0J2VNKLJ6N"
 
-void DataScraper::getStockData(string stockName, E_OperationType op)
+struct memoryStruct
 {
-    string cmd = buildCommand(stockName, DATA_SOURCE, buildRequest(getFuncFromOp(op), stockName));
-    if (system(cmd.data()) == -1)
+    public:
+    memoryStruct(char *buff, size_t currPosition): buff(buff), currPosition(currPosition){}
+    char *buff;
+    size_t currPosition;
+};
+
+static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userData)
+{
+    Logger *log = Logger::getInstance();
+    stringstream s;
+    s << nmemb;
+    log->LOG("writing " + s.str() + " bytes to buffer");
+    memoryStruct *mem = (memoryStruct*)userData;
+    memcpy(mem->buff + mem->currPosition, ptr, nmemb);
+    mem->currPosition += nmemb;
+    
+    return nmemb;
+} 
+
+string DataScraper::getStockData(string stockName, E_OperationType op)
+{
+    CURL *curl;
+    CURLcode res;
+    memoryStruct mem(NULL, 0);
+    string ret;
+
+    mem.buff = (char*)calloc(100000,1);
+    mem.currPosition = 0;
+ 
+    log->LOG("init curl");
+    curl = curl_easy_init();
+    if (curl) 
     {
-        cout << "command failed" << endl;
-        return;
+        string cmd = buildUrl(buildRequest(getFuncFromOp(op), stockName));
+        log->LOG("setting url : " + cmd);
+        curl_easy_setopt(curl, CURLOPT_URL, cmd.c_str());
     }
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &mem); 
+    /* Perform the request, res will get the return code */ 
+    log->LOG("perform curl call");
+    res = curl_easy_perform(curl);
+    /* Check for errors */ 
+    if(res != CURLE_OK)
+    {
+        stringstream s;
+        s << curl_easy_strerror(res);
+        log->LOG("curl_easy_perform() failed: " + s.str());
+    }
+
+    /* always cleanup */ 
+    log->LOG("perform curl cleanup");
+    curl_easy_cleanup(curl);
+
+    ret = string(mem.buff);
+    free(mem.buff);
+
+    return ret;
 }
 
-string DataScraper::buildCommand(string stockName, string hostName, string request)
+string DataScraper::searchTicker(string searchFor)
 {
-    string cmdBase("curl -i -o ");
-    return cmdBase + stockName + ".json" + " \"" + hostName + request + "\"";
+    return string("T");
+}
 
+
+string DataScraper::buildUrl(string request)
+{
+    return DATA_SOURCE + request + "\"";
 }
 
 string DataScraper::buildRequest(string func, string stockName)
@@ -75,6 +134,18 @@ string DataScraper::getFuncFromOp(E_OperationType op)
     }
 
     return res;
+}
+
+DataScraper::DataScraper() : log(Logger::getInstance())
+{
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    log->LOG("DataScraper constructor");
+}
+
+DataScraper::~DataScraper()
+{
+    curl_global_cleanup();
+    log->LOG("DataScraper destructor");
 }
 
 }//namespace autoTrader

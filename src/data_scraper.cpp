@@ -28,9 +28,8 @@ struct memoryStruct
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userData)
 {
     Logger *log = Logger::getInstance();
-    stringstream s;
-    s << nmemb;
-    log->LOG("writing " + s.str() + " bytes to buffer");
+    
+    log->LOG("writing " + to_string(nmemb) + " bytes to buffer");
     memoryStruct *mem = (memoryStruct*)userData;
     memcpy(mem->buff + mem->currPosition, ptr, nmemb);
     mem->currPosition += nmemb;
@@ -64,9 +63,7 @@ string DataScraper::getStockData(string stockName, E_OperationType op)
     /* Check for errors */ 
     if(res != CURLE_OK)
     {
-        stringstream s;
-        s << curl_easy_strerror(res);
-        log->LOG("curl_easy_perform() failed: " + s.str());
+        log->LOG("curl_easy_perform() failed: " + string(curl_easy_strerror(res)));
     }
 
     /* always cleanup */ 

@@ -1,5 +1,5 @@
 /*
-* Logger.cpp
+* logger.cpp
 */
 
 #include <logger.hpp>
@@ -10,36 +10,37 @@ using namespace std;
 
 namespace autoTrader
 {
-    Logger *Logger::s_loggerInstance = NULL;
+    SingleLogger *Logger::s_loggerInstance = NULL;
 
     void Logger::log(string msg,string fileName, string funcName, int lineNum)
     {
-        time_t now = time(NULL);
-        struct tm *dt = localtime(&now);
-        char currTime[200] = {0};
-
-        strftime(currTime, 200, "%a %m/%d/%y %H:%M:%S " , dt);
-        cout << currTime <<  fileName << ":" << lineNum << " - " << msg << endl;
+        s_loggerInstance->log(msg, fileName, funcName, lineNum);
     }
 
-    Logger *Logger::getInstance()
+    SingleLogger *Logger::getInstance()
     {
         if (!s_loggerInstance)
         {
-            s_loggerInstance = new Logger();
+            s_loggerInstance = new SingleLogger();
+			std::atexit(&cleanup);
         }
 
         return s_loggerInstance;
     }
 
-    Logger::Logger()
-    {
-
-    }
-
     Logger::~Logger()
     {
-
+		
     }
+
+	void Logger::cleanup()
+	{
+		delete s_loggerInstance;
+	}
+
+	SingleLogger *Logger::operator->()
+	{
+		return s_loggerInstance;
+	}
     
 }//namespace autoTrader

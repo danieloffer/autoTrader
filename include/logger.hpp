@@ -1,15 +1,14 @@
 /**
- * Logger.hpp
+ * logger.hpp
  **/
 
 #ifndef LOGGER
 #define LOGGER
 
 #include <string>
+#include <single_logger.hpp>
 
 using namespace std;
-
-#define LOG(x) log((x), string(__FILE__), string(__FUNCTION__), __LINE__)
 
 namespace autoTrader
 {
@@ -18,11 +17,12 @@ class Logger
 {
 public:
     void log(string msg,string fileName, string funcName, int lineNum);
-    static Logger *getInstance();
-    ~Logger();
+    static SingleLogger *getInstance();
+    SingleLogger *operator->();
 private:
-    Logger();
-    static Logger *s_loggerInstance;
+    ~Logger();
+    static void cleanup();
+    static SingleLogger *s_loggerInstance;
 };
 
 }//namespace autoTrader

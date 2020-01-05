@@ -7,7 +7,6 @@
 #include <iostream>
 #include <stdlib.h>
 #include <curl/curl.h>
-#include <sstream>
 
 using namespace std;
 
@@ -27,7 +26,7 @@ struct memoryStruct
 
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userData)
 {
-    Logger *log = Logger::getInstance();
+    SingleLogger *log = Logger::getInstance();
     
     log->LOG("writing " + to_string(nmemb) + " bytes to buffer");
     memoryStruct *mem = (memoryStruct*)userData;

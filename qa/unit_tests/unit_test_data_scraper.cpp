@@ -16,7 +16,5 @@ int main()
 
 	res = ds.getStockData(searchResult, DataScraper::DAILY_ADJ);
 
-	cout << res;
-
 	return 0;
 }

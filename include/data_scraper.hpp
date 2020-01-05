@@ -38,7 +38,7 @@ private:
     string buildRequest(string func, string stockName);
     string getFuncFromOp(E_OperationType op);
 
-    Logger *log;
+    SingleLogger *log;
 };
 
 }//namespace autoTrader

@@ -1,5 +1,6 @@
 /**
  * data_scraper.hpp
+ * This module's purpose is to get stock data
  **/
 
 #ifndef DATA_SCRAPER

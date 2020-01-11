@@ -16,6 +16,10 @@ namespace autoTrader
 #define DATA_SOURCE "https://www.alphavantage.co/"
 #define API_KEY "5BCBTE0J2VNKLJ6N"
 
+/*
+* this struct is to pass a buffer and a current position to the write callback
+* so that it can handle multiple callbacks
+*/
 struct memoryStruct
 {
     public:
@@ -24,6 +28,7 @@ struct memoryStruct
     size_t currPosition;
 };
 
+/* writes the data recieved from the https response to the buffer in the userData*/
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userData)
 {
     SingleLogger *log = Logger::getInstance();
@@ -89,7 +94,7 @@ string DataScraper::buildUrl(string request)
 string DataScraper::buildRequest(string func, string stockName)
 {
     string cmdBase("query?function=");
-    return cmdBase + func + "&symbol=" + stockName + "&apikey=" + API_KEY;
+    return cmdBase + func + "&symbol=" + stockName + "&datatype=csv" + "&apikey=" + API_KEY;
 
 }
 

@@ -37,10 +37,5 @@ namespace autoTrader
 	{
 		delete s_loggerInstance;
 	}
-
-	SingleLogger *Logger::operator->()
-	{
-		return s_loggerInstance;
-	}
     
 }//namespace autoTrader

@@ -1,5 +1,6 @@
 /**
  * logger.hpp
+ * this module's purpose is to make the SingleLogger module into a singleton
  **/
 
 #ifndef LOGGER
@@ -18,7 +19,6 @@ class Logger
 public:
     void log(string msg,string fileName, string funcName, int lineNum);
     static SingleLogger *getInstance();
-    SingleLogger *operator->();
 private:
     ~Logger();
     static void cleanup();

@@ -1,5 +1,6 @@
 /**
  * single_logger.hpp
+ * this module's purpose is to log everything that happens in the other modules to a log file
  **/
 
 #ifndef SINGLE_LOGGER

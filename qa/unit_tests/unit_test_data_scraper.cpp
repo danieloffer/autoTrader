@@ -14,7 +14,9 @@ int main()
 	string res;
 	string searchResult = ds.searchTicker("at&t");
 
-	res = ds.getStockData(searchResult, DataScraper::DAILY_ADJ);
+	res = ds.getStockData(searchResult, DataScraper::CURRENT_PRC);
+
+	std::cout << res << std::endl;
 
 	return 0;
 }

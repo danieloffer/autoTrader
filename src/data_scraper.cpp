@@ -140,13 +140,13 @@ string DataScraper::getFuncFromOp(E_OperationType op)
 DataScraper::DataScraper() : log(Logger::getInstance())
 {
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    log->LOG("DataScraper constructor");
+    log->LOG("DataScraper ctor");
 }
 
 DataScraper::~DataScraper()
 {
     curl_global_cleanup();
-    log->LOG("DataScraper destructor");
+    log->LOG("DataScraper dtor");
 }
 
 }//namespace autoTrader

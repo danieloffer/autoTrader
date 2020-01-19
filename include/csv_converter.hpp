@@ -16,16 +16,16 @@ using namespace std;
 
 namespace autoTrader
 {
-
+template <typename T>
 class CsvConverter
 {
 public:
     CsvConverter(string csvFileName);
     ~CsvConverter();
-    vector<void *> CsvToVector();
-    AvlTree *csvToAvlTree();
-    int vectorToCsv(vector<void *> data);
-    int avlTreeToCsv(AvlTree *data);
+    vector<T *> CsvToVector();
+    AvlTree<T> *csvToAvlTree();
+    int vectorToCsv(vector<T *> data);
+    int avlTreeToCsv(AvlTree<T> *data);
 private:
     fstream csvFile;
 };

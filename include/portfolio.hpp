@@ -1,8 +1,7 @@
 /**
  * portfolio.hpp
- * This module's purpose is to get stock data
+ * This module's purpose is to manage the portfolio
  **/
-
 #ifndef PORTFOLIO
 #define PORTFOLIO
 

@@ -46,9 +46,9 @@ public:
     explicit AvlTree(compFunc func, void *param);
     ~AvlTree();
     int insert(T *data);
-    void remove(T *data);
-    T *getElement(void *data, findFunc func, void *param);
-    vector<T *> getMultiElement(void *data, findFunc func, void *param);
+    void remove(T *dataToRemove);
+    T *find(T *datatoFind);
+    vector<T *> multiFind(T *datatoFind);
     size_t size();
     int isEmpty();
     int forEach(actionFunc func, void *param);
@@ -70,7 +70,12 @@ private:
     static E_ROTATION_CASE getRotationCase(AvlTreeNode *node);
     AvlTreeNode *rotateSide(AvlTreeNode *node, E_CHILDREN side);
     AvlTreeNode *balance(AvlTreeNode *root);
-    static int recForEach(actionFunc func, void *param, AvlTreeNode *node);    
+    static int recForEach(actionFunc func, void *param, AvlTreeNode *node);  
+    T *recFind(AvlTreeNode *currentNode, T *dataToFind);
+    void recMultiFind(AvlTreeNode *currentNode, T *dataToFind, vector<T *> *vec);
+    AvlTreeNode *findAndRemove(AvlTreeNode *currentNode, T *dataToRemove); 
+    AvlTreeNode *removeNode(AvlTreeNode *currentNode); 
+    AvlTreeNode *getNext(AvlTreeNode *currentNode, AvlTreeNode **nextToReturn);
     AvlTreeNode *root;
     compFunc sortedByFunc;
     void *param;
@@ -115,7 +120,7 @@ typename AvlTree<T>::AvlTreeNode *AvlTree<T>::rotateSide(AvlTreeNode *node, E_CH
 {
 	typename AvlTree<T>::AvlTreeNode *pivot = node->children[!side];
 	
-	root->children[!side] = pivot->children[side];
+	node->children[!side] = pivot->children[side];
 	pivot->children[side] = node;
 	
 	updateHeight(node);
@@ -163,7 +168,7 @@ void AvlTree<T>::destroySubTree(AvlTreeNode *node)
         destroySubTree(node->children[LEFT]);
         destroySubTree(node->children[RIGHT]);
 
-        delete node->data;
+        delete node;
     }
 }
 
@@ -171,11 +176,14 @@ template <typename T>
 AvlTree<T>::~AvlTree()
 {
     log->LOG("AvlTree dtor");
-    
-    destroySubTree(root->children[LEFT]);
-    destroySubTree(root->children[RIGHT]);
 
-    delete root;
+    if (root)
+    {
+        destroySubTree(root->children[LEFT]);
+        destroySubTree(root->children[RIGHT]);
+
+        delete root;
+    }
 }
 
 template <typename T>
@@ -203,28 +211,127 @@ int AvlTree<T>::insert(T *data)
     {
         return 1;
     }
-
+    
     root = insertRec(root, newNode);
 
     return 0;
 }
 
 template <typename T> 
-void AvlTree<T>::remove(T *data)
+typename AvlTree<T>::AvlTreeNode *AvlTree<T>::getNext(AvlTreeNode *currentNode, AvlTreeNode **nextToReturn)
 {
+    if (!currentNode->children[LEFT])
+	{
+		*nextToReturn = currentNode;
+		
+		return currentNode->children[RIGHT];
+	}
+	
+	currentNode->children[LEFT] = getNext(currentNode->children[LEFT], nextToReturn);
+	
+	updateHeight(currentNode);
+	
+	return balance(currentNode);
+}
 
+template <typename T> 
+typename AvlTree<T>::AvlTreeNode *AvlTree<T>::removeNode(AvlTreeNode *nodeToRemove)
+{
+    AvlTreeNode *temp = NULL;
+    if (!nodeToRemove->children[RIGHT])
+    {
+        temp = nodeToRemove->children[LEFT];
+        delete nodeToRemove;
+        
+        return temp;
+    }
+
+    nodeToRemove->children[RIGHT] = getNext(nodeToRemove->children[RIGHT], &temp);
+    temp->children[LEFT] = nodeToRemove->children[LEFT];
+    temp->children[RIGHT] = nodeToRemove->children[RIGHT];
+    delete nodeToRemove;
+
+    updateHeight(temp);
+
+    return balance(temp);
+}
+
+template <typename T> 
+typename AvlTree<T>::AvlTreeNode *AvlTree<T>::findAndRemove(AvlTreeNode *currentNode, T *dataToRemove)
+{
+    int res = sortedByFunc(currentNode->data, dataToRemove, param);
+    if (!res)
+    {
+        return removeNode(currentNode);
+    }
+
+    E_CHILDREN side = (res >= 0) ? LEFT : RIGHT;
+
+    currentNode->children[side] = this->findAndRemove(currentNode->children[side], dataToRemove);
+
+    updateHeight(currentNode);
+
+    return balance(currentNode);
+}
+
+template <typename T> 
+void AvlTree<T>::remove(T *dataToRemove)
+{
+    root = this->findAndRemove(root, dataToRemove);
 }
 
 template <typename T>
-T *AvlTree<T>::getElement(void *data, findFunc func, void *param)
+T *AvlTree<T>::recFind(AvlTreeNode *currentNode, T *dataToFind)
 {
-    return new T();
+    if (!currentNode)
+    {
+        return NULL;
+    }
+
+    int res = sortedByFunc(currentNode->data, dataToFind, param);
+    if (!res)
+    {
+        return currentNode->data;
+    }
+
+    E_CHILDREN side = (res >= 0) ? LEFT : RIGHT;
+
+    return this->recFind(currentNode->children[side], dataToFind);
 }
 
 template <typename T>
-vector<T *> AvlTree<T>::getMultiElement(void *data, findFunc func, void *param)
+T *AvlTree<T>::find(T *datatoFind)
 {
-    return new vector<T *>();
+    return this->recFind(root, datatoFind);
+}
+
+template <typename T>
+void AvlTree<T>::recMultiFind(AvlTreeNode *currentNode, T *dataToFind, vector<T *> *vec)
+{
+    if (!currentNode)
+    {
+        return;
+    }
+
+    int res = sortedByFunc(currentNode->data, dataToFind, param);
+    if (!res)
+    {
+        vec->push_back(currentNode->data);
+    }
+
+    E_CHILDREN side = (res >= 0) ? LEFT : RIGHT;
+
+    this->recMultiFind(currentNode->children[side], dataToFind, vec);
+}
+
+template <typename T>
+vector<T *> AvlTree<T>::multiFind(T *dataToFind)
+{
+    vector<T *> vec;
+
+    this->recMultiFind(root, dataToFind, &vec);
+
+    return vec;
 }
 
 template <typename T>

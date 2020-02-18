@@ -4,6 +4,9 @@
 
 #include <csv_handler.hpp>
 #include <iostream>
+#include <entry.hpp>
+#include <trade_entry.hpp>
+#include <portfolio_entry.hpp>
 
 using namespace autoTrader;
 using namespace std;
@@ -17,6 +20,18 @@ int main()
 	vector<vector<string> > vec = {};
 	vec = CsvHandlerReader->read();
 
+	time_t doneAt = time(NULL) - 100;
+
+	Entry *portfolioEntry = new PortfolioEntry(vec[1], doneAt);
+	cout << portfolioEntry->toString() << endl;
+	vector<string> vec1 = portfolioEntry->entryToVector();
+
+	Entry *portfolioEntry1 = new PortfolioEntry(vec[1]);
+	cout << portfolioEntry1->toString() << endl;
+
+	// Entry *tradeEntry2 = new PortfolioEntry(vec[1], doneAt, 5);
+	// cout << tradeEntry2->toString() << endl;
+
 	CsvHandler *CsvHandlerWriter = new CsvHandler(WRITE_FILE_NAME);
 	CsvHandlerWriter->write(vec);
 
@@ -25,6 +40,9 @@ int main()
 
 	delete CsvHandlerReader;
 	delete CsvHandlerWriter;
+	delete portfolioEntry;
+	delete portfolioEntry1;
+	// delete tradeEntry2;
 
 	return 0;
 }

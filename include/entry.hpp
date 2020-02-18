@@ -6,6 +6,9 @@
 #ifndef ENTRY
 #define ENTRY
 
+#include <string>
+#include <vector>
+
 using namespace std;
 
 namespace autoTrader
@@ -14,10 +17,12 @@ namespace autoTrader
 class Entry
 {
 public:
-    virtual ~Entry();
+    virtual ~Entry(){}
     virtual string toString()=0;
-    virtual Entry *csvToEntry(vector<vector<string> >entryAsCsv)=0;
-    virtual Entry *stringToEntry(string entryAsString)=0;
+    virtual vector<string> entryToVector()=0;
+
+protected:
+    time_t timeStamp;
 };
 
 }//namespace autoTrader

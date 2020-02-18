@@ -7,8 +7,6 @@
 #define TRADE_ENTRY
 
 #include <entry.hpp>
-#include <vector>
-#include <string>
 
 using namespace std;
 
@@ -18,11 +16,10 @@ namespace autoTrader
 class TradeEntry : public Entry
 {
 public:
-    TradeEntry();
+    TradeEntry(vector<string> vec, time_t timeStamp = time(NULL), size_t entryId = 0);
     ~TradeEntry();
     string toString();
-    Entry *csvToEntry(vector<vector<string> >entryAsCsv);
-    Entry *stringToEntry(string entryAsString);
+    vector<string> entryToVector();
 
 private:
     size_t entryId;
@@ -30,7 +27,7 @@ private:
     string stockName;
     int position;
     float price;
-    time_t doneAt; 
+    // PortfolioEntry portfolioEntry; 
 };
 
 }//namespace autoTrader

@@ -12,8 +12,8 @@ namespace autoTrader
     {
         this->timeStamp = timeStamp;
         this->ticker = vec[0];
-        this->stockName = vec[1];
-        this->position = atoi(vec[2].c_str());
+        this->stockName = (vec.size() > 1) ? vec[1] : "NULL";
+        this->position = (vec.size() > 2) ? atoi(vec[2].c_str()) : 0;
 
         this->avgPrice = (vec.size() > 3) ? atof(vec[3].c_str()) : -1;
         this->pnl = (vec.size() > 4) ? atof(vec[4].c_str()) : -1;
@@ -52,5 +52,40 @@ namespace autoTrader
         vec[7] = to_string(timeStamp);
 
         return vec; 
+    }
+
+    string PortfolioEntry::getTicker()
+    {
+        return ticker;
+    }
+
+    string PortfolioEntry::getStockName()
+    {
+        return stockName;
+    }
+
+    int PortfolioEntry::getPosition()
+    {
+        return position;
+    }
+
+    float PortfolioEntry::getAvgPrice()
+    {
+        return avgPrice;
+    }
+
+    float PortfolioEntry::getPnl()
+    {
+        return pnl;
+    }
+
+    float PortfolioEntry::getCashPnl()
+    {
+        return cashPnl;
+    }
+
+    float PortfolioEntry::getCurrentPrice()
+    {
+        return currentPrice;
     }
 }//namespace autoTrader

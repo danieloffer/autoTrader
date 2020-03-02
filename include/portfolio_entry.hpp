@@ -20,6 +20,13 @@ public:
     ~PortfolioEntry();
     string toString();
     vector<string> entryToVector();
+    string getTicker();
+    string getStockName();
+    int getPosition();
+    float getAvgPrice();
+    float getPnl();
+    float getCashPnl();
+    float getCurrentPrice();
 
 private:
     string ticker;
@@ -29,7 +36,7 @@ private:
     float pnl;
     float cashPnl;
     float currentPrice;
-    // vector<TradeEntry> tradeEntry; 
+    // vector<TradeEntry> tradeEntry; //should have Cctor for avlTree?
 };
 
 }//namespace autoTrader

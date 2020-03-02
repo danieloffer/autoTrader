@@ -1,44 +1,39 @@
 /**
  * portfolio.hpp
- * This module's purpose is to manage the portfolio
+ * this module's purpose is to represent a portfolio
  **/
+
 #ifndef PORTFOLIO
 #define PORTFOLIO
 
-#include <string>
-#include <time>
-#include <logger.hpp>
+#include <entry.hpp>
+#include <fstream>
+#include <portfolio_entry.hpp>
+#include <avl_tree.hpp>
+#include <csv_handler.hpp>
 
+#define PORTFOLIO_PERSISTANT_STORAGE "./Portfolio.csv"
 
 using namespace std;
 
 namespace autoTrader
 {
-    
+
 class Portfolio
 {
 public:
-    
+    Portfolio();
+    ~Portfolio();
+    PortfolioEntry *getPortfolioEntry(string tickerToFind);
+    void writePortfolioEntry(PortfolioEntry *entry);
+
 private:
-    class PortfolioEntry
-    {
-    public:
-        PortfolioEntry(string stockName, string ticker, size_t amount, unsigned float latestPrice, unsigned float boughtPrice,
-                        float changeFromPurchase, time_t firstTraded, time_t lastTraded);
-    private:
-        string stockName;
-        string ticker;
-        size_t amount;
-        unsigned float latestPrice;
-        unsigned float boughtPrice;
-        float changeFromPurchase;
-        time_t firstTraded;
-        time_t lastTraded;
-    }
+    AvlTree<PortfolioEntry> *portfolio;
+    ofstream portfolioFile;
+    CsvHandler *csvReader;
     SingleLogger *log;
 };
 
 }//namespace autoTrader
-
 
 #endif //PORTFOLIO

@@ -11,8 +11,8 @@
 using namespace autoTrader;
 using namespace std;
 
-#define READ_FILE_NAME "/home/daniel/autoTrader/test.csv"
-#define WRITE_FILE_NAME "/home/daniel/autoTrader/new_test.csv"
+#define READ_FILE_NAME "/home/daniel/autoTrader/qa/unit_tests/test.csv"
+#define WRITE_FILE_NAME "/home/daniel/autoTrader/qa/unit_tests/new_test.csv"
 
 int main()
 {

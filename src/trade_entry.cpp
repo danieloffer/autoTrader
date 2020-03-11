@@ -39,6 +39,12 @@ namespace autoTrader
                 "\ntimeStamp: " + asctime(gmtime(&timeStamp)));
     }
 
+    string TradeEntry::toCsvString()
+    {
+        return (to_string(entryId) + "," + ticker + "," + stockName + "," 
+                + to_string(position) + "," + to_string(price) + "," + to_string(timeStamp));
+    }
+
     vector<string> TradeEntry::entryToVector()
     {
         vector<string> vec(6, "");

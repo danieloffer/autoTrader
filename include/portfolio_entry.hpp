@@ -19,6 +19,7 @@ public:
     PortfolioEntry(vector<string> vec, time_t timeStamp = time(NULL));
     ~PortfolioEntry();
     string toString();
+    string toCsvString();
     vector<string> entryToVector();
     string getTicker();
     string getStockName();

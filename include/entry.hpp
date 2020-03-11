@@ -19,6 +19,7 @@ class Entry
 public:
     virtual ~Entry(){}
     virtual string toString()=0;
+    virtual string toCsvString()=0;
     virtual vector<string> entryToVector()=0;
 
 protected:

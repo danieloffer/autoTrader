@@ -12,7 +12,7 @@
 #include <avl_tree.hpp>
 #include <csv_handler.hpp>
 
-#define PORTFOLIO_PERSISTANT_STORAGE "./Portfolio.csv"
+#define PORTFOLIO_PERSISTANT_STORAGE "Portfolio.csv"
 
 using namespace std;
 
@@ -25,7 +25,7 @@ public:
     Portfolio();
     ~Portfolio();
     PortfolioEntry *getPortfolioEntry(string tickerToFind);
-    void writePortfolioEntry(PortfolioEntry *entry);
+    void writePortfolioEntry(PortfolioEntry *entry) throw();
 
 private:
     AvlTree<PortfolioEntry> *portfolio;

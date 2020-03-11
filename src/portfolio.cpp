@@ -2,6 +2,7 @@
  * portfolio.cpp
  **/
 
+#include <iostream>
 #include <exception>
 #include <portfolio.hpp>
 
@@ -21,38 +22,68 @@ namespace autoTrader
 
     static int writeEntryToCsv(PortfolioEntry *entry, void *param)
     {
-        //continue!!
+        UNUSED(param);
+
+        int res = 0;
+        string entryAsString = entry->toCsvString();
+        CsvHandler writer(PORTFOLIO_PERSISTANT_STORAGE);
+
+        if (entryAsString.empty())
+        {
+            res = 1;
+        }
+
+        writer.write(writer.parseCsvString(entryAsString));
+
+        return res;
     }
 
     Portfolio::Portfolio(): 
         portfolio(new AvlTree<PortfolioEntry>(compFunc, NULL)),
-        portfolioFile(PORTFOLIO_PERSISTANT_STORAGE),
         csvReader(new CsvHandler(PORTFOLIO_PERSISTANT_STORAGE)),
         log(Logger::getInstance())
     {
+        vector<vector<string> > portfolioVec = {};
+        portfolioFile.open(PORTFOLIO_PERSISTANT_STORAGE, ios::in);
         log->LOG("Portfolio Ctor");
+        portfolioVec = csvReader->read();
+
+        for (int i = 1; i < portfolioVec.size(); ++i)
+        {
+            time_t doneAt = stoul(portfolioVec[i][7]);
+            PortfolioEntry *entry = new PortfolioEntry(portfolioVec[i], doneAt);
+            writePortfolioEntry(entry);
+            delete entry;
+        }
+
+        portfolioFile.close();
     }
 
     Portfolio::~Portfolio()
     {
         log->LOG("Portfolio Dtor");
 
+        portfolioFile.open(PORTFOLIO_PERSISTANT_STORAGE, ios::trunc);
+        portfolioFile.close();
+
         if (portfolio->forEach(writeEntryToCsv, NULL))
         {
-            log->LOG("Failed to write portfolio to file"); 
-            throw 1;   
+            log->LOG("Failed to write portfolio to file");    
+        }
+        else
+        {
+            log->LOG("Successfully wrote portfolio to file");
         }
 
-        log->LOG("Successfully wrote portfolio to file");
         delete portfolio;
-        portfolioFile.close();
         delete csvReader;
     }
 
     PortfolioEntry *Portfolio::getPortfolioEntry(string tickerToFind)
     {
         vector<string> tempEntry = {tickerToFind};
-        return portfolio->find(&PortfolioEntry(tempEntry));
+        PortfolioEntry entry(tempEntry);
+        return portfolio->find(&entry);
     }
 
     void Portfolio::writePortfolioEntry(PortfolioEntry *entry) throw()

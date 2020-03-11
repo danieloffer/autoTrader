@@ -61,7 +61,7 @@ vector<vector<string> > CsvHandler::parseCsvString(string csvAsString)
 
 int CsvHandler::write(vector<vector<string> > data)
 {
-    ofstream csvFileWriter(csvFileName);
+    ofstream csvFileWriter(csvFileName, ios::out | ios::app);
     if (!csvFileWriter.is_open())
     {
         log->LOG("csvHandler write: couldn't open file for writing " + csvFileName);

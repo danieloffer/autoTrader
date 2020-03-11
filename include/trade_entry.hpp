@@ -19,6 +19,7 @@ public:
     TradeEntry(vector<string> vec, time_t timeStamp = time(NULL), size_t entryId = 0);
     ~TradeEntry();
     string toString();
+    string toCsvString();
     vector<string> entryToVector();
 
 private:

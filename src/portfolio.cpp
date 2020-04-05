@@ -45,14 +45,20 @@ namespace autoTrader
     {
         vector<vector<string> > portfolioVec = {};
         portfolioFile.open(PORTFOLIO_PERSISTANT_STORAGE, ios::in);
+
         log->LOG("Portfolio Ctor");
+        
         portfolioVec = csvReader->read();
 
-        for (int i = 1; i < portfolioVec.size(); ++i)
+        for (int i = 1; i < (int)portfolioVec.size(); ++i)
         {
             time_t doneAt = stoul(portfolioVec[i][7]);
             PortfolioEntry *entry = new PortfolioEntry(portfolioVec[i], doneAt);
+
+            log->LOG("calling writePortfolioEntry with " + entry->getTicker()); 
+            
             writePortfolioEntry(entry);
+
             delete entry;
         }
 
@@ -61,9 +67,16 @@ namespace autoTrader
 
     Portfolio::~Portfolio()
     {
+        string csvHeader;
+        ifstream inputStream(PORTFOLIO_PERSISTANT_STORAGE);
+        
         log->LOG("Portfolio Dtor");
 
-        portfolioFile.open(PORTFOLIO_PERSISTANT_STORAGE, ios::trunc);
+        getline(inputStream, csvHeader);
+        inputStream.close();
+
+        portfolioFile.open(PORTFOLIO_PERSISTANT_STORAGE, ios::trunc | ios::out);
+        portfolioFile << csvHeader << '\n';
         portfolioFile.close();
 
         if (portfolio->forEach(writeEntryToCsv, NULL))
@@ -83,6 +96,9 @@ namespace autoTrader
     {
         vector<string> tempEntry = {tickerToFind};
         PortfolioEntry entry(tempEntry);
+
+        log->LOG("Portfolio::getPortfolioEntry - " + tickerToFind);
+
         return portfolio->find(&entry);
     }
 

@@ -13,7 +13,9 @@ int main()
 
 	while(1)
 	{
-		
+		server.presentUi();
+
+		server.getUserInput();
 	}
 
 	return 0;

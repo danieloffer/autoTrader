@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
+#include <string.h>
 #include <control_client.hpp>
 
 using namespace std;
@@ -40,17 +41,59 @@ namespace autoTrader
 
     int ControlClient::sendUserInput(int userSelection)
     {
+        if (-1 == write(sock_fd, &userSelection, sizeof(int)))
+        {
+            cout << "ControlClient::sendUserInput(int) - Error writing to socket" << endl;
+        }
+
         return 0;
     }
 
     int ControlClient::sendUserInput(string userSelection)
     {
+        if (-1 == write(sock_fd, userSelection.c_str(), userSelection.length() + 1))
+        {
+            cout << "ControlClient::sendUserInput(string) - Error writing to socket" << endl;
+        }
+
         return 0;
     }
 
     ClientServerUi ControlClient::getNewUi()
     {
-        ClientServerUi ret = {"Please enter your selection...", INT};
+        ClientServerUi ret = {NULL};
+        void *buf = NULL;
+        int expectedInputType = 0;
+        ssize_t msgSize = 0;
+
+        buf = calloc(MAX_MSG_LEN, sizeof(char));
+        if (!buf)
+        {
+            cout << "ControlClient::getNewUi - Error allocating buffer" << endl;
+
+            return ret;
+        }
+        
+        if (-1 == read(sock_fd, &expectedInputType, sizeof(int)))
+        {
+            cout << "ControlClient::getNewUi - Error reading from socket" << endl;
+        }
+        ret.expectedInputType = (E_InputType)expectedInputType;
+
+        msgSize = read(sock_fd, buf, MAX_MSG_LEN);
+        if (-1 == msgSize)
+        {
+            cout << "ControlClient::getNewUi - Error reading from socket" << endl;
+        }
+        ret.uiMessage = (char *)calloc(msgSize, sizeof(char));
+        if (!ret.uiMessage)
+        {
+           cout << "ControlClient::getNewUi - Error allocating buffer" << endl; 
+        }
+        memmove(ret.uiMessage, buf, msgSize);
+
+
+        free(buf);
         
         return ret;
     }
@@ -72,6 +115,7 @@ int main(int argc, char *argv[])
     {
         currentUiScreen = client.getNewUi();
         cout << currentUiScreen.uiMessage << endl;
+        free(currentUiScreen.uiMessage);
 
         if (currentUiScreen.expectedInputType == INT)
         {

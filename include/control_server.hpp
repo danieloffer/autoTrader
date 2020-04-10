@@ -25,6 +25,9 @@ public:
 
 private:
     SingleLogger *log;
+    int sock_new;
+    int tcp_fd;
+    ClientServerUi currentUiScreen;
 };
 
 }//namespace autoTrader

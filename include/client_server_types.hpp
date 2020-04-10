@@ -6,11 +6,10 @@
 #ifndef CLIENT_SERVER_TYPES
 #define CLIENT_SERVER_TYPES
 
-#include <string>
-
 using namespace std;
 
 #define SERVER_PORT_NUM 1234
+#define MAX_MSG_LEN 1024
 
 namespace autoTrader
 {
@@ -22,7 +21,7 @@ namespace autoTrader
     
     struct ClientServerUi
     {
-        string uiMessage;
+        char *uiMessage;
         E_InputType expectedInputType;
     };
 }//namespace autoTrader

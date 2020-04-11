@@ -9,13 +9,13 @@ using namespace std;
 
 int main()
 {
-	ControlServer server;
+	ControlServer *server = getInstance();
 
 	while(1)
 	{
-		server.presentUi();
+		server->presentUi();
 
-		server.getUserInput();
+		server->processUserInput();
 	}
 
 	return 0;

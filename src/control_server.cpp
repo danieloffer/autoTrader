@@ -6,19 +6,20 @@
 #include <unistd.h>
 #include <netinet/ip.h>
 #include <string.h>
+#include <iostream>
 #include <control_server.hpp>
 #include <client_server_types.hpp>
+#include <server_operations.hpp>
 
 using namespace std;
 
 namespace autoTrader
 {
-    ControlServer::ControlServer() : log(Logger::getInstance())
+    ControlServer::ControlServer() : log(Logger::getInstance()), currentScreen(0)
     {
         struct sockaddr_in server_addr = {0};
         struct sockaddr_storage client_addr = {0};
         
-        currentUiScreen = {"Please enter your selection:\n1:Buy\n2:Sell\n3:Settings\0", INT};
         tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
 
         log->LOG("ControlServer ctor - fd = " + to_string(tcp_fd));
@@ -59,57 +60,81 @@ namespace autoTrader
     {   
         log->LOG("ControlServer::presentUi");
 
-        if (-1 == write(sock_new, &currentUiScreen.expectedInputType, sizeof(currentUiScreen.expectedInputType)))
+        if (-1 == write(sock_new, &screens[currentScreen].uiScreen.expectedInputType, 
+			sizeof(screens[currentScreen].uiScreen.expectedInputType)))
         {
             log->LOG("ControlServer::presentUi - Error writing to socket");
         }
-        if (-1 == write(sock_new, currentUiScreen.uiMessage, strlen(currentUiScreen.uiMessage) + 1))
+        if (-1 == write(sock_new, screens[currentScreen].uiScreen.uiMessage, 
+						strlen(screens[currentScreen].uiScreen.uiMessage) + 1))
         {
             log->LOG("ControlServer::presentUi - Error writing to socket");
         }
     }
 
-    void ControlServer::getUserInput()
+    void ControlServer::processUserInput()
     {
         size_t bytesToRead = 0;
-        void *userInput = NULL;
 
         log->LOG("ControlServer::getUserInput");
 
-        if (INT == currentUiScreen.expectedInputType)
+        if (INT == screens[currentScreen].uiScreen.expectedInputType)
         {
             int userInputInt = 0;
 
             bytesToRead = sizeof(int);
-            userInput = calloc(bytesToRead, sizeof(char));
 
-            if (!userInput)
-            {
-                log->LOG("ControlServer::getUserInput - Error allocation buffer");
-            }
             if (-1 == read(sock_new, &userInputInt, bytesToRead))
             {
                 log->LOG("ControlServer::getUserInput - Error reading from socket");
             }
 
             log->LOG("ControlServer::getUserInput - user pressed: " + to_string(userInputInt));
+
+			if (!userInputInt)
+			{
+				cout << "bye bye" << endl;
+			}
+			else
+			{
+				currentScreen = screens[currentScreen].actions[userInputInt](&userInputInt);
+			}
         }
         else
         {
             bytesToRead = MAX_MSG_LEN;
-            userInput = calloc(bytesToRead, sizeof(char));
+            void *userInput = calloc(bytesToRead, sizeof(char));
 
             if (!userInput)
             {
                 log->LOG("ControlServer::getUserInput - Error allocation buffer");
             }
-            if (-1 == read(sock_new, &userInput, bytesToRead))
+            if (-1 == read(sock_new, userInput, bytesToRead))
             {
                 log->LOG("ControlServer::getUserInput - Error reading from socket");
             }
-        }
 
-        free(userInput);
+			log->LOG("ControlServer::getUserInput - user entered: " + string((char*)userInput));
+
+			currentScreen = screens[currentScreen].actions[0](userInput);
+        	
+			free(userInput);
+			userInput = NULL;
+        }
     }
 
+	void ControlServer::sendDataToClient(void *data)
+	{
+		int bytes_written;
+		char *dataToSend;
+		size_t count = strlen((char*)data) + 1;
+
+		while (count > 0)
+		{
+			bytes_written = write(sock_new, dataToSend, count);
+			
+			dataToSend += bytes_written;
+			count -= bytes_written;
+		}
+	}
 }//namespace autoTrader

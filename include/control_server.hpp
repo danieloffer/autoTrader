@@ -13,7 +13,6 @@ using namespace std;
 
 namespace autoTrader
 {
-
 class ControlServer
 {
 public:
@@ -21,13 +20,14 @@ public:
     ~ControlServer();
 
     void presentUi();
-    void getUserInput();
+    void processUserInput();
+    static void sendDataToClient(void *data);
 
 private:
     SingleLogger *log;
+    int currentScreen;
     int sock_new;
     int tcp_fd;
-    ClientServerUi currentUiScreen;
 };
 
 }//namespace autoTrader

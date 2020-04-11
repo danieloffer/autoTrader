@@ -10,6 +10,7 @@ using namespace std;
 
 #define SERVER_PORT_NUM 1234
 #define MAX_MSG_LEN 1024
+#define MAX_DATA_LEN 2048
 
 namespace autoTrader
 {

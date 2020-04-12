@@ -3,7 +3,7 @@
  **/
 
 #include <iostream>
-#include <control_server.hpp>
+#include <server.hpp>
 #include <data_scraper.hpp>
 
 using namespace std;
@@ -77,9 +77,10 @@ namespace autoTrader
     {
         cout << "Getting data for " << (char*)param << "..." << endl;
         DataScraper scraper;
+		ControlServer *server = Server::getInstance();
         string data = scraper.getStockData(string((char*)param), DataScraper::DAILY_ADJ);
 
-        ControlServer::sendDataToClient((void*)(data.c_str()));
+        server->sendDataToClient((void*)(data.c_str()));
 
         cout << "sent data to client" << endl;
 

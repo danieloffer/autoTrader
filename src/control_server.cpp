@@ -94,6 +94,7 @@ namespace autoTrader
 			if (!userInputInt)
 			{
 				cout << "bye bye" << endl;
+                exit(1);
 			}
 			else
 			{
@@ -126,8 +127,12 @@ namespace autoTrader
 	void ControlServer::sendDataToClient(void *data)
 	{
 		int bytes_written;
-		char *dataToSend;
-		size_t count = strlen((char*)data) + 1;
+		char *dataToSend = (char*)data;
+		size_t count = strlen(dataToSend) + 1;
+
+        log->LOG("ControlServer::sendDataToClient - sending data to client");
+
+        write(sock_new, &count, sizeof(count));
 
 		while (count > 0)
 		{
@@ -136,5 +141,7 @@ namespace autoTrader
 			dataToSend += bytes_written;
 			count -= bytes_written;
 		}
+
+        log->LOG("ControlServer::sendDataToClient - completed sending data to client");
 	}
 }//namespace autoTrader

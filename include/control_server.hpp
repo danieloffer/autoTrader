@@ -21,7 +21,7 @@ public:
 
     void presentUi();
     void processUserInput();
-    static void sendDataToClient(void *data);
+    void sendDataToClient(void *data);
 
 private:
     SingleLogger *log;

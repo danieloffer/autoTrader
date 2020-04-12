@@ -14,7 +14,7 @@ namespace autoTrader
 {
 
 #define DATA_SOURCE "https://www.alphavantage.co/"
-#define API_KEY "API_KEY_HERE"
+#define API_KEY "5BCBTE0J2VNKLJ6N"
 
 /*
 * this struct is to pass a buffer and a current position to the write callback

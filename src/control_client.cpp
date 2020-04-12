@@ -54,6 +54,8 @@ namespace autoTrader
         if (-1 == write(sock_fd, userSelection.c_str(), userSelection.length() + 1))
         {
             cout << "ControlClient::sendUserInput(string) - Error writing to socket" << endl;
+
+            return 1;
         }
 
         return 0;
@@ -97,6 +99,22 @@ namespace autoTrader
         
         return ret;
     }
+
+    void ControlClient::readDataFromServer(char *buf)
+    {
+        int bytes_read = 0;
+        size_t count = MAX_DATA_LEN; 
+
+        read(sock_fd, &count, sizeof(count));
+
+        while (count > 0)
+        {
+            bytes_read = read(sock_fd, buf, count);
+            
+            buf += bytes_read;
+            count -= bytes_read;
+        }
+    }
 }//namespace autoTrader
 
 using namespace autoTrader;
@@ -135,6 +153,8 @@ int main(int argc, char *argv[])
         }
         else if (currentUiScreen.expectedInputType == STR)
         {
+            char *buf = NULL;
+
             cin >> strUserChoice;
             res = client.sendUserInput(strUserChoice);
             
@@ -142,6 +162,17 @@ int main(int argc, char *argv[])
             {
                 break;
             }
+
+            buf = (char*)calloc(MAX_DATA_LEN, sizeof(char));
+            if (!buf)
+            {
+                cout << "Error allocating memory for stock data" << endl;
+                break;
+            }
+
+            client.readDataFromServer(buf);
+            cout << "Got data from server. Printing to screen" << endl;
+            cout << buf << endl;
         }
     }
 

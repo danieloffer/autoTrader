@@ -2,14 +2,14 @@
 * unit_test_control_server.cpp
 */
 
-#include <control_server.hpp>
+#include <server.hpp>
 
 using namespace autoTrader;
 using namespace std;
 
 int main()
 {
-	ControlServer *server = getInstance();
+	ControlServer *server = Server::getInstance();
 
 	while(1)
 	{

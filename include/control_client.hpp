@@ -25,6 +25,7 @@ public:
     int sendUserInput(int userSelection);
     int sendUserInput(string userSelection);
     ClientServerUi getNewUi();
+    void readDataFromServer(char *buf);
 private:
     int sock_fd;
 };

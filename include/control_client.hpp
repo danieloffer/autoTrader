@@ -9,7 +9,7 @@
 #include <string>
 #include <client_server_types.hpp>
 
-#define SERVER_ADDR "192.168.68.110"
+#define SERVER_ADDR "192.168.14.197" // The IP address of the server. (might change, need to find a way to dynamically find addr or make permenant)
 
 using namespace std;
 
@@ -19,12 +19,39 @@ namespace autoTrader
 class ControlClient
 {
 public:
+    /*
+    *ControlClient Ctor
+    */
     ControlClient();
+    /*
+    *ControlClient Dtor
+    */
     ~ControlClient();
 
+    /*
+    *Sends the user selection to the server
+    *param userSelection - the user selection (int)
+    *Returns 0 on success
+    */
     int sendUserInput(int userSelection);
+
+    /*
+    *Sends the user selection to the server
+    *param userSelection - the user selection (string)
+    *Returns 0 on success
+    */
     int sendUserInput(string userSelection);
+
+    /*
+    *Gets a new ClientServerUi from the server. A blocking function, waits for the server to send the new UI
+    *Returns ClientServerUi on success On failure, the struct will contain NULL uiMessage
+    */
     ClientServerUi getNewUi();
+
+    /*
+    *Reads data from the server. A blocking function, waits for the server
+    *param buf - a pre-allocated buffer to put the incoming data from the server into
+    */
     void readDataFromServer(char *buf);
 private:
     int sock_fd;

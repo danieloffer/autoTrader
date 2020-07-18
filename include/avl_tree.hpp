@@ -1,6 +1,6 @@
 /**
  * avl_tree.hpp
- * this module's purpose is to provide an avl tree data structure
+ * this module's purpose is to provide a templated avl tree data structure
  **/
 
 #ifndef AVL_TREE
@@ -15,8 +15,16 @@ using namespace std;
 namespace autoTrader
 {
 #define MAXIMUM(a,b) (((a) >= (b)) ? (a) : (b))
+
+//Get the height of the child specified,0 if there is no child in that direction
 #define GET_HEIGHT(node, direction) ((node)->children[(direction)]) ? (node)->children[(direction)]->height : 0
+
+//Get the balance factor of a tree node. The balance factor is the difference between the height of the left child
+//and the right child of the node
 #define BALANCE_FACTOR(root) ((long)(GET_HEIGHT((root), LEFT)) - (long)(GET_HEIGHT((root), RIGHT)))
+
+//Get the child that is the result of the tree's compare function
+#define GET_SIDE(cmp_func, a, b, param) (cmp_func((a), (b), (param)) >= 0) ? LEFT : RIGHT
 
 enum E_CHILDREN
 {
@@ -24,7 +32,6 @@ enum E_CHILDREN
     RIGHT = 1,
     MAX_CHILDREN = 2
 };
-#define GET_SIDE(cmp_func, a, b, param) (cmp_func((a), (b), (param)) >= 0) ? LEFT : RIGHT
 
 enum E_ROTATION_CASE
 {
@@ -43,21 +50,87 @@ public:
     typedef int (*findFunc)(T *a, T *b, void *param); // function to find element by
     typedef int (*actionFunc)(T *data, void *param); // function to perform on each element
    
+    /*
+    *An AvlTree Ctor.
+    *param func - a compare function to sort the tree by.
+    *param param - a parameter that can be passed to the comp/find/action funcs
+    */
     explicit AvlTree(compFunc func, void *param);
+
+    /*
+    *An Avltree Dtor
+    *Destroys the data in the tree
+    */
     ~AvlTree();
+
+    /*
+    *Insert data of type T to the tree
+    * param data - a pointer to the data we wish to the tree to save
+    * The tree holds copies of the data sent to it.
+    * Returns 0 if successful, 1 otherwise 
+    */
     int insert(T *data);
+
+    /*
+    *Removes a node from the tree
+    *param datawToRemove - removes the data that the parameter is pointing to.
+    *destroys the data the node was pointing to
+    */
     void remove(T *dataToRemove);
+
+    /*
+    *Find a node in the tree based on the findFunc. If more that one node matches the data, the first
+    *occurrence will be returned
+    *param dataToFind - the data we want to find in the tree
+    *Returns a pointer to the data if exists, NULL otherwise
+    */
     T *find(T *datatoFind);
+
+    /*
+    *Find multiple node based on the findFunc.
+    *param dataToFind - the data we want to find in the tree
+    *Returns a vector of pointers to the data found in the tree, an empty vector if none match the param
+    */
     vector<T *> multiFind(T *datatoFind);
+
+    /*
+    *Returns the size of the tree
+    *O(n)
+    */
     size_t size();
+
+    /*
+    *Returns 1 if the tree is empty, 0 otherwise
+    * O(1)
+    */
     int isEmpty();
+
+    /*
+    *Perform an action on each node of the tree
+    *param func - The actionFunc to perform on the node
+    param param - a parameter to pass to the actionFunc
+    *Returns 0 for success, any other int for failure of one of the function calls
+    *If the function fails for a node, the forEach function stops iterating at that node and returns the result
+    */
     int forEach(actionFunc func, void *param);
     
 private:
+
+    // A struct of an individual node of the AvlTree
     struct AvlTreeNode
     {
+        /*
+        *AvlTreeNode Ctor. Duplicates the data passed to it
+        *param data - a pointer to a data of type T for the node to hold
+        */
         AvlTreeNode(T *data): data(new T(*data)), height(1){children[LEFT] = NULL; children[RIGHT] = NULL;} // T must have a Cctor
+
+        /*
+        *AvlTreeNode Dtor
+        *deletes the data it points to. If T is a class that contains non POD members, it must have a Dtor
+        */
         ~AvlTreeNode(){delete data;}
+
         T *data;
         size_t height;
         AvlTreeNode *children[2];
@@ -76,6 +149,7 @@ private:
     AvlTreeNode *findAndRemove(AvlTreeNode *currentNode, T *dataToRemove); 
     AvlTreeNode *removeNode(AvlTreeNode *currentNode); 
     AvlTreeNode *getNext(AvlTreeNode *currentNode, AvlTreeNode **nextToReturn);
+
     AvlTreeNode *root;
     compFunc sortedByFunc;
     void *param;

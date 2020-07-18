@@ -16,11 +16,31 @@ namespace autoTrader
 class ControlServer
 {
 public:
+
+    /*
+    *ControlServer Ctor
+    */
     ControlServer();
+
+    /*
+    *ControlServer Dtor
+    */
     ~ControlServer();
 
+    /*
+    *sends a ControlClient the next screen to show the user
+    */
     void presentUi();
+
+    /*
+    *receive and process user input sent from the ControlClient. A blocking function, waits for the client
+    */
     void processUserInput();
+
+    /*
+    *sends data to the client
+    *param data - the data to sent to the client
+    */
     void sendDataToClient(void *data);
 
 private:

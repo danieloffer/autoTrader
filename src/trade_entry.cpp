@@ -9,7 +9,7 @@ using namespace std;
 namespace autoTrader
 {
 
-    size_t getEntryId(string ticker, time_t doneAt) // complete function to produce hash
+    size_t generateEntryId(string ticker, time_t doneAt) // complete function to produce hash
     {
         return 1;
     }
@@ -21,7 +21,7 @@ namespace autoTrader
         this->stockName = vec[1];
         this->position = atoi(vec[2].c_str());
         this->price = atof(vec[3].c_str());
-        this->entryId = entryId ? entryId : getEntryId(ticker, timeStamp);
+        this->entryId = entryId ? entryId : generateEntryId(ticker, timeStamp);
     }
 
     TradeEntry::~TradeEntry()

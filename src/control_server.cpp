@@ -10,6 +10,7 @@
 #include <control_server.hpp>
 #include <client_server_types.hpp>
 #include <server_operations.hpp>
+#include <exception_types.hpp>
 
 using namespace std;
 

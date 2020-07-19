@@ -22,7 +22,7 @@ namespace autoTrader
     };
     
     //A struct that represents the UI the server passes to the client. 
-    //It contains a message for the client to present to the user and the type of data the server is watinf for
+    //It contains a message for the client to present to the user and the type of data the server is wating for
     struct ClientServerUi
     {
         char *uiMessage;

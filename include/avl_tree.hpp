@@ -21,7 +21,7 @@ namespace autoTrader
 
 //Get the balance factor of a tree node. The balance factor is the difference between the height of the left child
 //and the right child of the node
-#define BALANCE_FACTOR(root) ((long)(GET_HEIGHT((root), LEFT)) - (long)(GET_HEIGHT((root), RIGHT)))
+#define BALANCE_FACTOR(root) (static_cast<long>(GET_HEIGHT((root), LEFT)) - static_cast<long>(GET_HEIGHT((root), RIGHT)))
 
 //Get the child that is the result of the tree's compare function
 #define GET_SIDE(cmp_func, a, b, param) (cmp_func((a), (b), (param)) >= 0) ? LEFT : RIGHT

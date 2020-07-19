@@ -34,19 +34,19 @@ namespace autoTrader
 	int setInterval(void *param);
     int serverGetData(void *param);
 
-    ClientServerUi mainUi = {"Please enter your selection:\n1:Buy\n2:Sell\n3:Settings\n4:get stock data\0", INT};
+    ClientServerUi mainUi = {const_cast<char*>("Please enter your selection:\n1:Buy\n2:Sell\n3:Settings\n4:get stock data\0"), INT};
 	UiNode main = {mainUi, {actionVoid, actionBuy, actionSell, actionSettings, actiongetData}};
 
-	ClientServerUi buyUi = {"Enter stock symbol to buy:\n\0", STR};
+	ClientServerUi buyUi = {const_cast<char*>("Enter stock symbol to buy:\n\0"), STR};
 	UiNode buy = {buyUi, {buyStock, actionVoid, actionVoid, actionVoid, actionVoid}};
 
-	ClientServerUi sellUi = {"Enter stock symbol to sell:\n\0", STR};
+	ClientServerUi sellUi = {const_cast<char*>("Enter stock symbol to sell:\n\0"), STR};
 	UiNode sell = {sellUi, {sellStock, actionVoid, actionVoid, actionVoid, actionVoid}};
 
-	ClientServerUi settingsUi = {"Enter selection:\n1:get logs\n2:set check interval\0", INT};
+	ClientServerUi settingsUi = {const_cast<char*>("Enter selection:\n1:get logs\n2:set check interval\0"), INT};
 	UiNode settings = {settingsUi, {actionVoid, getLogs, setInterval, actionVoid, actionVoid}};
 
-    ClientServerUi getDataUi = {"Enter stock symbol you wish to get data for\0", STR};
+    ClientServerUi getDataUi = {const_cast<char*>("Enter stock symbol you wish to get data for\0"), STR};
 	UiNode getData = {getDataUi, {serverGetData, actionVoid, actionVoid, actionVoid, actionVoid}};
 
     UiNode screens[NUM_OF_SCREENS] = {

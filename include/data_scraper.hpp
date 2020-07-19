@@ -30,9 +30,27 @@ public:
         SEARCH
     };
 
+    /*
+    *DataScraper Ctor
+    */
     DataScraper();
+
+    /*
+    *DataScraper Dtor
+    */
     ~DataScraper();
+
+    /*
+    *Returns the data for a single stock according to the operation type
+    *param stockName - the stock to get data for
+    *param op - the type of data to get (E_OperationType)
+    */
     string getStockData(string stockName, E_OperationType op);
+
+    /*
+    *Search for a stock ticker
+    *param searchFor - the ticker to search for
+    */
     string searchTicker(string searchFor);
 private:
     string buildUrl(string request);

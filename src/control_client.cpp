@@ -90,7 +90,7 @@ namespace autoTrader
         ret.uiMessage = (char *)calloc(msgSize, sizeof(char));
         if (!ret.uiMessage)
         {
-           cout << "ControlClient::getNewUi - Error allocating buffer" << endl; 
+            cout << "ControlClient::getNewUi - Error allocating buffer" << endl; 
         }
         memmove(ret.uiMessage, buf, msgSize);
 

@@ -17,7 +17,18 @@ namespace autoTrader
 class Logger
 {
 public:
+    /*
+    *Writes a log message in the log file
+    *param msg - the message to be written
+    *param fileName - the file the msg originated from
+    *param funcName - the function the msg originated from
+    *param lineNum - the line the msg originated from
+    */
     void log(string msg,string fileName, string funcName, int lineNum);
+
+    /*
+    *Returns an instance of a SingleLogger. The logger functionality is meant to operate with a single logger
+    */
     static SingleLogger *getInstance();
 private:
     ~Logger();

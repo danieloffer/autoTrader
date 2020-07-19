@@ -16,6 +16,9 @@ namespace autoTrader
 class Server
 {
 public:
+    /*
+    *Returns a pointer to a ControlServer instance. The ControlServer is meant to be a singleton
+    */
     static ControlServer *getInstance();
 private:
     ~Server();

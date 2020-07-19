@@ -21,12 +21,31 @@ namespace autoTrader
 class DataManager
 {
 public:
+    /*
+    *DataManager Dtor. 
+    */
     ~DataManager();
+
+    /*
+    *Returns a DataManager instance
+    */
     DataManager *getInstance();
+
+    /*
+    *write an Entry to the appropriate database
+    */
     void writeEntry();
+
+    /*
+    *Get an Entry from a database
+    *Returns a pointer to an Entry if successful, NULL otherwise
+    */
     Entry *getEntry();
 
 private:
+    /*
+    *DataManager Ctor. Private so a user can't make an instance. meant to be a singleton 
+    */
     DataManager();
 
     static DataManager *instance;

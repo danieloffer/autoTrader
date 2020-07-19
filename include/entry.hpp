@@ -17,9 +17,25 @@ namespace autoTrader
 class Entry
 {
 public:
+
+    /*
+    *Entry Dtor
+    */
     virtual ~Entry(){}
+
+    /*
+    *Returns the Entry as a string
+    */
     virtual string toString()=0;
+    
+    /*
+    *Returns the Entry as a string csv styled
+    */
     virtual string toCsvString()=0;
+
+    /*
+    *Returns the Entry vector of strings
+    */
     virtual vector<string> entryToVector()=0;
 
 protected:

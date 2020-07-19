@@ -58,4 +58,29 @@ namespace autoTrader
 
         return vec; 
     }
+
+    size_t TradeEntry::getEntryId()
+    {
+        return entryId;
+    }
+
+    string TradeEntry::getTicker()
+    {
+        return ticker;
+    }
+
+    string TradeEntry::getStockName()
+    {
+        return stockName;
+    }
+
+    int TradeEntry::getPosition()
+    {
+        return position;
+    }
+
+    float TradeEntry::getPrice()
+    {
+        return price;
+    }
 }//namespace autoTrader

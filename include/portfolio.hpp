@@ -22,9 +22,29 @@ namespace autoTrader
 class Portfolio
 {
 public:
+    /*
+    *Portfolio Ctor
+    */
     Portfolio();
+
+    /*
+    *Portfolio Dtor
+    */
     ~Portfolio();
+
+    /*
+    *Get an Entry from the Portfolio
+    *param tickerToFind - the ticker name of the Entry
+    Returns a pointer to a PortfolioEntry on success, NULL pointer otherwise
+    */
     PortfolioEntry *getPortfolioEntry(string tickerToFind);
+
+
+    /*
+    *Write a PortfolioEntry to the Portfolio
+    *param entry - the Entry to write.
+    *Throws an exception on failure
+    */
     void writePortfolioEntry(PortfolioEntry *entry) throw();
 
 private:

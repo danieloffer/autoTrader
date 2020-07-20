@@ -20,7 +20,7 @@ public:
     /*
     *ControlServer Ctor
     */
-    ControlServer();
+    ControlServer() throw();
 
     /*
     *ControlServer Dtor
@@ -30,18 +30,18 @@ public:
     /*
     *sends a ControlClient the next screen to show the user
     */
-    void presentUi();
+    void presentUi() throw();
 
     /*
     *receive and process user input sent from the ControlClient. A blocking function, waits for the client
     */
-    void processUserInput();
+    void processUserInput() throw();
 
     /*
     *sends data to the client
     *param data - the data to sent to the client
     */
-    void sendDataToClient(void *data);
+    void sendDataToClient(void *data) throw();
 
 private:
     SingleLogger *log;

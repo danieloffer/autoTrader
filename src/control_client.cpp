@@ -8,12 +8,13 @@
 #include <iostream>
 #include <string.h>
 #include <control_client.hpp>
+#include <exception_types.hpp>
 
 using namespace std;
 
 namespace autoTrader
 {
-    ControlClient::ControlClient()
+    ControlClient::ControlClient() throw()
     {
         struct sockaddr_in addr = {0};
 
@@ -21,6 +22,7 @@ namespace autoTrader
         if (sock_fd == -1)
         {
             perror("socket: ");
+            throw CLIENT_EXCEPTION(CLIENT_CONNECTION_ERR);
         }
 
         socklen_t len = sizeof(addr);
@@ -32,36 +34,38 @@ namespace autoTrader
         {
             cout << "Error connecting to " << SERVER_ADDR << " on port " << SERVER_PORT_NUM << endl;
             perror("connect: ");
+            throw CLIENT_EXCEPTION(CLIENT_CONNECTION_ERR);
         }
     }
+
     ControlClient::~ControlClient()
     {
         close(sock_fd);
     }
 
-    int ControlClient::sendUserInput(int userSelection)
+    int ControlClient::sendUserInput(int userSelection) throw()
     {
         if (-1 == write(sock_fd, &userSelection, sizeof(int)))
         {
             cout << "ControlClient::sendUserInput(int) - Error writing to socket" << endl;
+            throw CLIENT_EXCEPTION(CLIENT_SOCKET_WRITE_ERR);
         }
 
         return 0;
     }
 
-    int ControlClient::sendUserInput(string userSelection)
+    int ControlClient::sendUserInput(string userSelection) throw()
     {
         if (-1 == write(sock_fd, userSelection.c_str(), userSelection.length() + 1))
         {
             cout << "ControlClient::sendUserInput(string) - Error writing to socket" << endl;
-
-            return 1;
+            throw CLIENT_EXCEPTION(CLIENT_SOCKET_WRITE_ERR);
         }
 
         return 0;
     }
 
-    ClientServerUi ControlClient::getNewUi()
+    ClientServerUi ControlClient::getNewUi() throw()
     {
         ClientServerUi ret = {NULL};
         void *buf = NULL;
@@ -72,6 +76,7 @@ namespace autoTrader
         if (!buf)
         {
             cout << "ControlClient::getNewUi - Error allocating buffer" << endl;
+            throw CLIENT_EXCEPTION(CLIENT_ALLOCATION_ERR);
 
             return ret;
         }
@@ -79,6 +84,7 @@ namespace autoTrader
         if (-1 == read(sock_fd, &expectedInputType, sizeof(int)))
         {
             cout << "ControlClient::getNewUi - Error reading from socket" << endl;
+            throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
         }
         ret.expectedInputType = (E_InputType)expectedInputType;
 
@@ -86,30 +92,47 @@ namespace autoTrader
         if (-1 == msgSize)
         {
             cout << "ControlClient::getNewUi - Error reading from socket" << endl;
+            throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
         }
         ret.uiMessage = (char *)calloc(msgSize, sizeof(char));
         if (!ret.uiMessage)
         {
             cout << "ControlClient::getNewUi - Error allocating buffer" << endl; 
+            throw CLIENT_EXCEPTION(CLIENT_ALLOCATION_ERR);
         }
-        memmove(ret.uiMessage, buf, msgSize);
-
-
+        try
+        {
+            memmove(ret.uiMessage, buf, msgSize);
+        }
+        catch(const std::exception& e)
+        {
+            throw CLIENT_EXCEPTION(CLIENT_ALLOCATION_ERR);
+        }
+        
         free(buf);
         
         return ret;
     }
 
-    void ControlClient::readDataFromServer(char *buf)
+    void ControlClient::readDataFromServer(char *buf) throw()
     {
         int bytes_read = 0;
         size_t count = MAX_DATA_LEN; 
 
-        read(sock_fd, &count, sizeof(count));
+        if (-1 == read(sock_fd, &count, sizeof(count)))
+        {
+            cout << "ControlClient::readDataFromServer - Error reading from socket" << endl;
+            throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
+        }
 
         while (count > 0)
         {
             bytes_read = read(sock_fd, buf, count);
+            if (-1 == bytes_read)
+            {
+                cout << "ControlClient::readDataFromServer - Error reading from socket" << endl;
+                throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
+            }
             
             buf += bytes_read;
             count -= bytes_read;
@@ -131,49 +154,49 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        currentUiScreen = client.getNewUi();
-        cout << currentUiScreen.uiMessage << endl;
-        free(currentUiScreen.uiMessage);
-
-        if (currentUiScreen.expectedInputType == INT)
+        try
         {
-            cin >> userChoice;
-            if (!userChoice)
-            {
-                cout << "Quiting control client..." << endl;
-                break;
-            }
+            currentUiScreen = client.getNewUi();
+            cout << currentUiScreen.uiMessage << endl;
+            free(currentUiScreen.uiMessage);
 
-            res = client.sendUserInput(userChoice);
-            
-            if (res)
+            if (currentUiScreen.expectedInputType == INT)
             {
-                break;
+                cin >> userChoice;
+                if (!userChoice)
+                {
+                    cout << "Quiting control client..." << endl;
+                    break;
+                }
+
+                res = client.sendUserInput(userChoice);
+                
+            }
+            else if (currentUiScreen.expectedInputType == STR)
+            {
+                char *buf = NULL;
+
+                cin >> strUserChoice;
+                res = client.sendUserInput(strUserChoice);
+
+                buf = (char*)calloc(MAX_DATA_LEN, sizeof(char));
+                if (!buf)
+                {
+                    cout << "Error allocating memory for stock data" << endl;
+                    break;
+                }
+
+                client.readDataFromServer(buf);
+                cout << "Got data from server. Printing to screen" << endl;
+                cout << buf << endl;
             }
         }
-        else if (currentUiScreen.expectedInputType == STR)
+        catch(ClientError& e)
         {
-            char *buf = NULL;
-
-            cin >> strUserChoice;
-            res = client.sendUserInput(strUserChoice);
-            
-            if (res)
-            {
-                break;
-            }
-
-            buf = (char*)calloc(MAX_DATA_LEN, sizeof(char));
-            if (!buf)
-            {
-                cout << "Error allocating memory for stock data" << endl;
-                break;
-            }
-
-            client.readDataFromServer(buf);
-            cout << "Got data from server. Printing to screen" << endl;
-            cout << buf << endl;
+            cout << "Caught an exception, sleeping for 1 sec and try again" << endl;
+            std::cerr << e.what() << "at:" << e.getFileName() << ":" << e.getFuncName() << ":" << e.getLine() << endl;
         }
+        
     }
 
     if (res)

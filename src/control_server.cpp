@@ -16,7 +16,7 @@ using namespace std;
 
 namespace autoTrader
 {
-    ControlServer::ControlServer() : log(Logger::getInstance()), currentScreen(0)
+    ControlServer::ControlServer() throw(): log(Logger::getInstance()), currentScreen(0)
     {
         struct sockaddr_in server_addr = {0};
         struct sockaddr_storage client_addr = {0};
@@ -32,18 +32,21 @@ namespace autoTrader
         if (tcp_fd == -1)
         {
             perror("socket: ");
+            throw SERVER_EXCEPTION(SERVER_CONNECTION_ERR);
         }
 
         if (bind(tcp_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
         {
             perror("bind tcp: ");
             close(tcp_fd);
+            throw SERVER_EXCEPTION(SERVER_CONNECTION_ERR);
         }
 
         if (listen(tcp_fd, 5) == -1)
         {
             perror("listen: ");
             close(tcp_fd);
+            throw SERVER_EXCEPTION(SERVER_CONNECTION_ERR);
         }
 
         socklen_t len = sizeof(client_addr);
@@ -57,7 +60,7 @@ namespace autoTrader
         close(sock_new);
     }
 
-    void ControlServer::presentUi()
+    void ControlServer::presentUi() throw()
     {   
         log->LOG("ControlServer::presentUi");
 
@@ -65,15 +68,17 @@ namespace autoTrader
 			sizeof(screens[currentScreen].uiScreen.expectedInputType)))
         {
             log->LOG("ControlServer::presentUi - Error writing to socket");
+            throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
         }
         if (-1 == write(sock_new, screens[currentScreen].uiScreen.uiMessage, 
 						strlen(screens[currentScreen].uiScreen.uiMessage) + 1))
         {
             log->LOG("ControlServer::presentUi - Error writing to socket");
+            throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
         }
     }
 
-    void ControlServer::processUserInput()
+    void ControlServer::processUserInput() throw()
     {
         size_t bytesToRead = 0;
 
@@ -88,6 +93,7 @@ namespace autoTrader
             if (-1 == read(sock_new, &userInputInt, bytesToRead))
             {
                 log->LOG("ControlServer::getUserInput - Error reading from socket");
+                throw SERVER_EXCEPTION(SERVER_SOCKET_READ_ERR);
             }
 
             log->LOG("ControlServer::getUserInput - user pressed: " + to_string(userInputInt));
@@ -110,10 +116,12 @@ namespace autoTrader
             if (!userInput)
             {
                 log->LOG("ControlServer::getUserInput - Error allocation buffer");
+                throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
             }
             if (-1 == read(sock_new, userInput, bytesToRead))
             {
                 log->LOG("ControlServer::getUserInput - Error reading from socket");
+                throw SERVER_EXCEPTION(SERVER_SOCKET_READ_ERR);
             }
 
 			log->LOG("ControlServer::getUserInput - user entered: " + string((char*)userInput));
@@ -125,7 +133,7 @@ namespace autoTrader
         }
     }
 
-	void ControlServer::sendDataToClient(void *data)
+	void ControlServer::sendDataToClient(void *data) throw()
 	{
 		int bytes_written;
 		char *dataToSend = (char*)data;
@@ -133,11 +141,20 @@ namespace autoTrader
 
         log->LOG("ControlServer::sendDataToClient - sending data to client");
 
-        write(sock_new, &count, sizeof(count));
+        if (-1 == write(sock_new, &count, sizeof(count)))
+        {
+            log->LOG("ControlServer::sendDataToClient - Error writing to socket");
+            throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
+        }
 
 		while (count > 0)
 		{
 			bytes_written = write(sock_new, dataToSend, count);
+            if (-1 == bytes_written)
+            {
+                log->LOG("ControlServer::sendDataToClient - Error writing to socket");
+                throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
+            }
 			
 			dataToSend += bytes_written;
 			count -= bytes_written;

@@ -22,7 +22,7 @@ public:
     /*
     *ControlClient Ctor
     */
-    ControlClient();
+    ControlClient() throw();
     /*
     *ControlClient Dtor
     */
@@ -33,26 +33,26 @@ public:
     *param userSelection - the user selection (int)
     *Returns 0 on success
     */
-    int sendUserInput(int userSelection);
+    int sendUserInput(int userSelection) throw();
 
     /*
     *Sends the user selection to the server
     *param userSelection - the user selection (string)
     *Returns 0 on success
     */
-    int sendUserInput(string userSelection);
+    int sendUserInput(string userSelection) throw();
 
     /*
     *Gets a new ClientServerUi from the server. A blocking function, waits for the server to send the new UI
     *Returns ClientServerUi on success On failure, the struct will contain NULL uiMessage
     */
-    ClientServerUi getNewUi();
+    ClientServerUi getNewUi() throw();
 
     /*
     *Reads data from the server. A blocking function, waits for the server
     *param buf - a pre-allocated buffer to put the incoming data from the server into
     */
-    void readDataFromServer(char *buf);
+    void readDataFromServer(char *buf) throw();
 private:
     int sock_fd;
 };

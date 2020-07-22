@@ -3,20 +3,42 @@
 */
 
 #include <server.hpp>
+#include <exception_types.hpp>
+#include <iostream>
+#include <unistd.h>
 
 using namespace autoTrader;
 using namespace std;
 
 int main()
 {
-	ControlServer *server = Server::getInstance();
+	ControlServer *server = NULL;
+	try
+	{
+		server = Server::getInstance();
+	}
+	catch(const std::exception& e)
+	{
+		cout << "Sleeping for 3 seconds to allow the socket to be available" << endl;
+		sleep(3);
+	}
 
 	while(1)
 	{
-		server->presentUi();
+		try
+		{
+			server->presentUi();
 
-		server->processUserInput();
+			server->processUserInput();
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+			sleep(1);
+		}	
 	}
+	
+	
 
 	return 0;
 }

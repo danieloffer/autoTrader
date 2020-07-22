@@ -138,6 +138,7 @@ namespace autoTrader
 		int bytes_written;
 		char *dataToSend = (char*)data;
 		size_t count = strlen(dataToSend) + 1;
+        int readyMsg = 0;
 
         log->LOG("ControlServer::sendDataToClient - sending data to client");
 
@@ -145,6 +146,15 @@ namespace autoTrader
         {
             log->LOG("ControlServer::sendDataToClient - Error writing to socket");
             throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
+        }
+
+        while (!readyMsg)
+        {
+            if (-1 == read(sock_new, &readyMsg, sizeof(readyMsg)))
+            {
+                cout << "ControlServer::sendDataToClient - Error reading from socket" << endl;
+                throw CLIENT_EXCEPTION(SERVER_SOCKET_READ_ERR);
+            }
         }
 
 		while (count > 0)

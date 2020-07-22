@@ -117,20 +117,33 @@ namespace autoTrader
     void ControlClient::readDataFromServer(char *buf) throw()
     {
         int bytes_read = 0;
-        size_t count = MAX_DATA_LEN; 
+        int count = MAX_DATA_LEN;
+        int readyMsg = 1; 
 
         if (-1 == read(sock_fd, &count, sizeof(count)))
         {
-            cout << "ControlClient::readDataFromServer - Error reading from socket" << endl;
+            cout << "ControlClient::readDataFromServer - Error reading count from socket" << endl;
             throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
         }
 
+        cout << "ControlClient::readDataFromServer count is " << count << endl;
+
+        if (-1 == write(sock_fd, &readyMsg, sizeof(readyMsg)))
+        {
+            cout << "ControlClient::readDataFromServer - Error writing from socket" << endl;
+            throw CLIENT_EXCEPTION(CLIENT_SOCKET_WRITE_ERR);
+        }
+
+        cout << "ControlClient::readDataFromServer is ready " << endl;
+
         while (count > 0)
         {
+            cout << "ControlClient::readDataFromServer count is " << count << endl;
             bytes_read = read(sock_fd, buf, count);
+            cout << "ControlClient::readDataFromServer bytes_read is " << bytes_read << endl;
             if (-1 == bytes_read)
             {
-                cout << "ControlClient::readDataFromServer - Error reading from socket" << endl;
+                cout << "ControlClient::readDataFromServer - Error reading string from socket" << endl;
                 throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
             }
             

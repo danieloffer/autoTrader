@@ -43,18 +43,19 @@ public:
     int sendUserInput(string userSelection) throw();
 
     /*
-    *Gets a new ClientServerUi from the server. A blocking function, waits for the server to send the new UI
-    *Returns ClientServerUi on success On failure, the struct will contain NULL uiMessage
+    *Reads data from the server based on the header and handles based on commType.
+    *Blocking function
     */
-    ClientServerUi getNewUi() throw();
+    void recvAndHandleDataFromServer() throw();
 
     /*
-    *Reads data from the server. A blocking function, waits for the server
-    *param buf - a pre-allocated buffer to put the incoming data from the server into
+    *Reads user input and sends it to the server.
+    *Returns 1 as long as user doesn't enter 0 to exit
     */
-    void readDataFromServer(char *buf) throw();
+    int getAndsendUserDataToServer() throw();
 private:
     int sock_fd;
+    ClientServerComm *commHeader;
 };
 
 }//namespace autoTrader

@@ -80,7 +80,9 @@ namespace autoTrader
 		ControlServer *server = Server::getInstance();
         string data = scraper.getStockData(string((char*)param), DataScraper::DAILY_ADJ);
 
-        server->sendDataToClient(const_cast<char*>(data.c_str()));
+		server->setData(data.c_str());
+
+        server->sendDataToClient();
 
         cout << "sent data to client" << endl;
 

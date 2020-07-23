@@ -51,6 +51,23 @@ namespace autoTrader
 
         socklen_t len = sizeof(client_addr);
         sock_new = accept(tcp_fd, (struct sockaddr *)&client_addr, &len);
+
+        commHeader = static_cast<ClientServerComm*>(calloc(sizeof(ClientServerComm), sizeof(char)));
+        if (!commHeader)
+        {
+            cout << "Error allocating memory" << endl;
+        }
+
+        commHeader->commType = UI_TRANSFER;
+
+        commHeader->dataToTransfer = static_cast<char*>(calloc(strlen(screens->uiScreen.msg) + 1,
+                                        sizeof(char)));
+        if (!commHeader->dataToTransfer)
+        {
+            throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+        }
+        strcpy(commHeader->dataToTransfer, screens->uiScreen.msg);
+        commHeader->messageLen = strlen(commHeader->dataToTransfer);
     }
 
     ControlServer::~ControlServer()
@@ -58,118 +75,133 @@ namespace autoTrader
         log->LOG("ControlServer dtor");
         close(tcp_fd);
         close(sock_new);
-    }
 
-    void ControlServer::presentUi() throw()
-    {   
-        log->LOG("ControlServer::presentUi");
+        if (commHeader)
+        {
+            if (commHeader->dataToTransfer)
+            {
+                free(commHeader->dataToTransfer);
+            }
 
-        if (-1 == write(sock_new, &screens[currentScreen].uiScreen.expectedInputType, 
-			sizeof(screens[currentScreen].uiScreen.expectedInputType)))
-        {
-            log->LOG("ControlServer::presentUi - Error writing to socket");
-            throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
-        }
-        if (-1 == write(sock_new, screens[currentScreen].uiScreen.uiMessage, 
-						strlen(screens[currentScreen].uiScreen.uiMessage) + 1))
-        {
-            log->LOG("ControlServer::presentUi - Error writing to socket");
-            throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
+            free(commHeader);
         }
     }
 
-    void ControlServer::processUserInput() throw()
+    void static processUserInput(ClientServerComm *commHeader, int *currentScreen, int sockFd)
     {
-        size_t bytesToRead = 0;
+        cout << "processUserInput" << endl;
+        cout << "Received user input = " << commHeader->dataToTransfer << endl;
 
-        log->LOG("ControlServer::getUserInput");
-
-        if (INT == screens[currentScreen].uiScreen.expectedInputType)
+        if (INT == screens->uiScreen.expectedInput)
         {
-            int userInputInt = 0;
-
-            bytesToRead = sizeof(int);
-
-            if (-1 == read(sock_new, &userInputInt, bytesToRead))
-            {
-                log->LOG("ControlServer::getUserInput - Error reading from socket");
-                throw SERVER_EXCEPTION(SERVER_SOCKET_READ_ERR);
-            }
-
-            log->LOG("ControlServer::getUserInput - user pressed: " + to_string(userInputInt));
-
-			if (!userInputInt)
-			{
-				cout << "bye bye" << endl;
-                exit(1);
-			}
-			else
-			{
-				currentScreen = screens[currentScreen].actions[userInputInt](&userInputInt);
-			}
+            int intUserInput = *(reinterpret_cast<int*>(commHeader->dataToTransfer));
+            *currentScreen = screens->actions[*currentScreen](&intUserInput);
         }
-        else
+        else if(STR == screens->uiScreen.expectedInput)
         {
-            bytesToRead = MAX_MSG_LEN;
-            void *userInput = calloc(bytesToRead, sizeof(char));
+            *currentScreen = screens->actions[*currentScreen](commHeader->dataToTransfer);
+        }
 
-            if (!userInput)
+
+        if (commHeader->dataToTransfer)
+        {
+            free(commHeader->dataToTransfer);
+            commHeader->dataToTransfer = NULL;
+        }
+        commHeader->messageLen = strlen(screens->uiScreen.msg);
+        commHeader->dataToTransfer = static_cast<char*>(calloc(commHeader->messageLen + 1,
+                                        sizeof(char)));
+        if (!commHeader->dataToTransfer)
+        {
+            throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+        }
+
+        strcpy(commHeader->dataToTransfer, screens->uiScreen.msg);
+        commHeader->commType = UI_TRANSFER;
+    }
+
+    void ControlServer::getAndProcessUserInput() throw()
+    {
+        log->LOG("ControlServer::getAndProcessUserInput");
+
+        if (-1 == read(sock_new, commHeader, sizeof(ClientServerComm) - sizeof(char*)))
+        {
+            log->LOG("ControlServer::getUserInput - Error reading header from socket");
+            throw SERVER_EXCEPTION(SERVER_SOCKET_READ_ERR);
+        }
+
+        if (commHeader->dataToTransfer)
+        {
+            free(commHeader->dataToTransfer);
+            commHeader->dataToTransfer = NULL;
+        }
+        commHeader->dataToTransfer = static_cast<char*>(calloc(commHeader->messageLen + 1,
+                                        sizeof(char)));
+        if (!commHeader->dataToTransfer)
+        {
+            log->LOG("ControlServer::getUserInput - Error allocating memory");
+            throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+        }
+
+        if (-1 == read(sock_new, commHeader->dataToTransfer, commHeader->messageLen))
+        {
+            log->LOG("ControlServer::getUserInput - Error reading header from socket");
+            throw SERVER_EXCEPTION(SERVER_SOCKET_READ_ERR);
+        }
+
+        processUserInput(commHeader, &currentScreen, sock_new);
+
+        sendDataToClient();
+    }
+
+    static void writeAll(char *buf, size_t bytesToWrite, int sockFd)
+    {
+        ssize_t bytesWrote = 0;
+        while (bytesToWrite > 0)
+        {
+            cout << "ControlClient::readDataFromServer bytesToWrite is " << bytesToWrite << endl;
+            bytesWrote = write(sockFd, buf, bytesToWrite);
+            cout << "ControlClient::readDataFromServer bytes_read is " << bytesWrote << endl;
+            if (-1 == bytesWrote)
             {
-                log->LOG("ControlServer::getUserInput - Error allocation buffer");
-                throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+                cout << "ControlClient::readDataFromServer - Error reading string from socket" << endl;
+                throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
             }
-            if (-1 == read(sock_new, userInput, bytesToRead))
-            {
-                log->LOG("ControlServer::getUserInput - Error reading from socket");
-                throw SERVER_EXCEPTION(SERVER_SOCKET_READ_ERR);
-            }
-
-			log->LOG("ControlServer::getUserInput - user entered: " + string((char*)userInput));
-
-			currentScreen = screens[currentScreen].actions[0](userInput);
-        	
-			free(userInput);
-			userInput = NULL;
+            
+            buf += bytesWrote;
+            bytesToWrite -= bytesWrote;
         }
     }
 
-	void ControlServer::sendDataToClient(void *data) throw()
+	void ControlServer::sendDataToClient(ClientServerComm *commHeader) throw()
 	{
-		int bytes_written;
-		char *dataToSend = (char*)data;
-		size_t count = strlen(dataToSend) + 1;
-        int readyMsg = 0;
+        log->LOG("ControlServer::sendDataToClient");
 
-        log->LOG("ControlServer::sendDataToClient - sending data to client");
-
-        if (-1 == write(sock_new, &count, sizeof(count)))
-        {
-            log->LOG("ControlServer::sendDataToClient - Error writing to socket");
-            throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
-        }
-
-        while (!readyMsg)
-        {
-            if (-1 == read(sock_new, &readyMsg, sizeof(readyMsg)))
-            {
-                cout << "ControlServer::sendDataToClient - Error reading from socket" << endl;
-                throw CLIENT_EXCEPTION(SERVER_SOCKET_READ_ERR);
-            }
-        }
-
-		while (count > 0)
-		{
-			bytes_written = write(sock_new, dataToSend, count);
-            if (-1 == bytes_written)
-            {
-                log->LOG("ControlServer::sendDataToClient - Error writing to socket");
-                throw SERVER_EXCEPTION(SERVER_SOCKET_WRITE_ERR);
-            }
-			
-			dataToSend += bytes_written;
-			count -= bytes_written;
-		}
-
-        log->LOG("ControlServer::sendDataToClient - completed sending data to client");
+        writeAll(reinterpret_cast<char*>(commHeader), 
+                    sizeof(ClientServerComm) - sizeof(char*) + commHeader->messageLen, sock_new);
 	}
+
+    void ControlServer::sendDataToClient() throw()
+	{
+        log->LOG("ControlServer::sendDataToClient");
+
+        sendDataToClient(commHeader);
+	}
+
+    void ControlServer::setData(const char *data)
+    {
+        if (commHeader->dataToTransfer)
+        {
+            free(commHeader->dataToTransfer);
+            commHeader->dataToTransfer = NULL;
+        }
+
+        commHeader->dataToTransfer = static_cast<char*>(calloc(strlen(data), 
+                                        sizeof(char)));
+        if (!commHeader->dataToTransfer)
+        {
+            throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+        }
+        strcpy(commHeader->dataToTransfer, data);
+    }
 }//namespace autoTrader

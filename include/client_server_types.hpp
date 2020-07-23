@@ -29,7 +29,7 @@ namespace autoTrader
     };
 
     /*
-    The first 3 vars are the header which the server 
+    The first 2 vars are the header which the server 
     and client send to each other 
     the data to be transfared is at the end of the header as a 
     "Stretchy Buffer"
@@ -39,6 +39,12 @@ namespace autoTrader
         E_CommType commType;
         size_t messageLen;
         char *dataToTransfer;
+    };
+
+    struct ClientServerUi
+    {
+        char *msg;
+        E_InputType expectedInput;
     };
 }//namespace autoTrader
 

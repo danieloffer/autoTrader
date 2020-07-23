@@ -104,13 +104,18 @@ namespace autoTrader
 
     void ControlClient::recvAndHandleDataFromServer() throw()
     {
-        if (-1 == read(sock_fd, &commHeader, 
+        if (-1 == read(sock_fd, commHeader, 
                     (sizeof(ClientServerComm) - sizeof(char*))))
         {
             cout << "ControlClient::recvAndHandleDataFromServer - Error reading header from socket" << endl;
             throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
         }
 
+        if (commHeader->dataToTransfer)
+        {
+            free(commHeader->dataToTransfer);
+            commHeader->dataToTransfer = NULL;
+        }
         commHeader->dataToTransfer = static_cast<char*>(calloc(commHeader->messageLen + 1, sizeof(char)));
         if (!commHeader->dataToTransfer)
         {
@@ -137,6 +142,11 @@ namespace autoTrader
         cout << "ControlClient::getAndsendUserDataToServer" <<  endl;
 
         cin >> userChoice;
+        if (commHeader->dataToTransfer)
+        {
+            free(commHeader->dataToTransfer);
+            commHeader->dataToTransfer = NULL;
+        }
         commHeader->dataToTransfer = static_cast<char*>(calloc(userChoice.length() + 1,
                                         sizeof(char)));
         if (!commHeader->dataToTransfer)
@@ -146,9 +156,10 @@ namespace autoTrader
         }
 
         strcpy(commHeader->dataToTransfer, userChoice.c_str());
+        commHeader->messageLen = strlen(commHeader->dataToTransfer);
 
         writeAll(reinterpret_cast<char*>(commHeader), 
-                    sizeof(commHeader) - sizeof(char*) + commHeader->messageLen, sock_fd);
+                    sizeof(ClientServerComm) - sizeof(char*) + commHeader->messageLen, sock_fd);
 
         if (commHeader->dataToTransfer)
         {

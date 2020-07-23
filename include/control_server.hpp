@@ -28,26 +28,33 @@ public:
     ~ControlServer();
 
     /*
-    *sends a ControlClient the next screen to show the user
+    *Receive and process user input sent from the ControlClient. 
+    *A blocking function, waits for the client
     */
-    void presentUi() throw();
+    void getAndProcessUserInput() throw();
 
     /*
-    *receive and process user input sent from the ControlClient. A blocking function, waits for the client
-    */
-    void processUserInput() throw();
-
-    /*
-    *sends data to the client
+    *Sends data to the client
     *param data - the data to sent to the client
     */
-    void sendDataToClient(void *data) throw();
+    void sendDataToClient(ClientServerComm *commHeadera) throw();
+
+    /*
+    *Sends data to the client
+    */
+    void sendDataToClient() throw();
+
+    /*
+    *Sets the data in commHeader
+    */
+    void setData(const char *data);
 
 private:
     SingleLogger *log;
     int currentScreen;
     int sock_new;
     int tcp_fd;
+    ClientServerComm *commHeader;
 };
 
 }//namespace autoTrader

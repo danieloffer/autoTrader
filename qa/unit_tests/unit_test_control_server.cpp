@@ -27,9 +27,9 @@ int main()
 	{
 		try
 		{
-			server->presentUi();
+			server->sendDataToClient();
 
-			server->processUserInput();
+			server->getAndProcessUserInput();
 		}
 		catch(const std::exception& e)
 		{

@@ -42,6 +42,8 @@ namespace autoTrader
         {
             cout << "Error allocating memory" << endl;
         }
+
+        commHeader->isMoreComm = 1;
     }
 
     ControlClient::~ControlClient()
@@ -71,7 +73,7 @@ namespace autoTrader
         {
             cout << "ControlClient::readDataFromServer bytesToRead is " << bytesToRead << endl;
             bytesRead = read(sockFd, buf, bytesToRead);
-            cout << "ControlClient::readDataFromServer bytes_read is " << bytesRead << endl;
+            cout << "ControlClient::readDataFromServer bytesRead is " << bytesRead << endl;
             if (-1 == bytesRead)
             {
                 cout << "ControlClient::readDataFromServer - Error reading string from socket" << endl;
@@ -88,12 +90,12 @@ namespace autoTrader
         ssize_t bytesWrote = 0;
         while (bytesToWrite > 0)
         {
-            cout << "ControlClient::readDataFromServer bytesToWrite is " << bytesToWrite << endl;
+            cout << "writeAll bytesToWrite is " << bytesToWrite << endl;
             bytesWrote = write(sockFd, buf, bytesToWrite);
-            cout << "ControlClient::readDataFromServer bytes_read is " << bytesWrote << endl;
+            cout << "writeAll bytesWrote is " << bytesWrote << endl;
             if (-1 == bytesWrote)
             {
-                cout << "ControlClient::readDataFromServer - Error reading string from socket" << endl;
+                cout << "writeAll - Error reading string from socket" << endl;
                 throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
             }
             
@@ -137,11 +139,16 @@ namespace autoTrader
     int ControlClient::getAndsendUserDataToServer() throw()
     {
         string userChoice;
-        int res = 1;
+        int res = 0;
+        char *tempBuf = NULL;
 
         cout << "ControlClient::getAndsendUserDataToServer" <<  endl;
 
         cin >> userChoice;
+        if (!userChoice.compare("0"))
+        {
+            return 1;
+        }
         if (commHeader->dataToTransfer)
         {
             free(commHeader->dataToTransfer);
@@ -152,22 +159,34 @@ namespace autoTrader
         if (!commHeader->dataToTransfer)
         {
             cout << "Error allocating memory for stock data" << endl;
-            res = 0;
+            res = 1;
         }
 
         strcpy(commHeader->dataToTransfer, userChoice.c_str());
         commHeader->messageLen = strlen(commHeader->dataToTransfer);
 
-        writeAll(reinterpret_cast<char*>(commHeader), 
-                    sizeof(ClientServerComm) - sizeof(char*) + commHeader->messageLen, sock_fd);
+        tempBuf = reinterpret_cast<char*>(calloc(sizeof(ClientServerComm) - sizeof(char*) + commHeader->messageLen, sizeof(char)));
+        if (!tempBuf)
+        {
+            throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+        }
+        commHeader->serialize(tempBuf);
+        writeAll(tempBuf, sizeof(ClientServerComm) - sizeof(char*) + commHeader->messageLen,
+                                             sock_fd);
 
         if (commHeader->dataToTransfer)
         {
             free(commHeader->dataToTransfer);
             commHeader->dataToTransfer = NULL;
         }
+        free(tempBuf);
 
         return res;
+    }
+
+    int ControlClient::isMoreToRead()
+    {
+        return commHeader->isMoreComm;
     }
 }//namespace autoTrader
 
@@ -177,6 +196,7 @@ int main(int argc, char *argv[])
 {
     ControlClient client = ControlClient();
     int res = 0;
+    int isMoreToRead = 1;
 
     cout << "Welcome to autoTrader's remote control program" << endl;
 
@@ -184,8 +204,17 @@ int main(int argc, char *argv[])
     {
         try
         {
-            client.recvAndHandleDataFromServer();
-            client.getAndsendUserDataToServer();
+            while (isMoreToRead)
+            {
+                client.recvAndHandleDataFromServer();
+                isMoreToRead = client.isMoreToRead();
+            }
+            if (client.getAndsendUserDataToServer())
+            {
+                cout << "Quiting" << endl;
+                break;
+            }
+            isMoreToRead = 1;
         }
         catch(ClientError& e)
         {
@@ -193,11 +222,6 @@ int main(int argc, char *argv[])
             std::cerr << e.what() << "at:" << e.getFileName() << ":" << e.getFuncName() << ":" << e.getLine() << endl;
         }
         
-    }
-
-    if (res)
-    {
-        cout << "Quiting with error - " << res << endl;
     }
 
     return res;

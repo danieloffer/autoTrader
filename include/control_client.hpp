@@ -53,6 +53,11 @@ public:
     *Returns 1 as long as user doesn't enter 0 to exit
     */
     int getAndsendUserDataToServer() throw();
+
+    /*
+    *Returns 1 if there is another transmission from the server to process, 0 otherwise
+    */
+    int isMoreToRead();
 private:
     int sock_fd;
     ClientServerComm *commHeader;

@@ -81,10 +81,9 @@ namespace autoTrader
         string data = scraper.getStockData(string((char*)param), DataScraper::DAILY_ADJ);
 
 		server->setData(data.c_str());
+		server->setIsMoreComm(1);
 
-        server->sendDataToClient();
-
-        cout << "sent data to client" << endl;
+		server->sendDataToClient();
 
         return 0;
     }

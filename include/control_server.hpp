@@ -49,6 +49,11 @@ public:
     */
     void setData(const char *data);
 
+    /*
+    *Sets isMoreComm in commHeader
+    */
+    void setIsMoreComm(int inIsMoreComm);
+
 private:
     SingleLogger *log;
     int currentScreen;

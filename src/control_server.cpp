@@ -58,7 +58,7 @@ namespace autoTrader
             cout << "Error allocating memory" << endl;
         }
 
-        commHeader->commType = UI_TRANSFER;
+        commHeader->commType = E_UI_TRANSFER;
 
         commHeader->dataToTransfer = static_cast<char*>(calloc(strlen(screens->uiScreen.msg) + 1,
                                         sizeof(char)));
@@ -92,32 +92,72 @@ namespace autoTrader
         cout << "processUserInput" << endl;
         cout << "Received user input = " << commHeader->dataToTransfer << endl;
 
-        if (INT == screens->uiScreen.expectedInput)
+        if (E_INT == screens[*currentScreen].uiScreen.expectedInput)
         {
-            int intUserInput = *(reinterpret_cast<int*>(commHeader->dataToTransfer));
-            *currentScreen = screens->actions[*currentScreen](&intUserInput);
-        }
-        else if(STR == screens->uiScreen.expectedInput)
-        {
-            *currentScreen = screens->actions[*currentScreen](commHeader->dataToTransfer);
-        }
+            int intUserInput = atoi(commHeader->dataToTransfer);
+            *currentScreen = screens[*currentScreen].actions[intUserInput](&intUserInput);
+            if (4 == *currentScreen)
+            {
+                commHeader->commType = E_STOCK_DATA_TRANSFER;
+            }
+            else if (1 == *currentScreen)
+            {
+                commHeader->commType = E_BUY;
+            }
+            else if (2 == *currentScreen)
+            {
+                commHeader->commType = E_SELL;
+            }
 
+            if (commHeader->dataToTransfer)
+            {
+                free(commHeader->dataToTransfer);
+                commHeader->dataToTransfer = NULL;
+            }
+            commHeader->messageLen = strlen(screens[*currentScreen].uiScreen.msg);
+            commHeader->dataToTransfer = static_cast<char*>(calloc(commHeader->messageLen + 1,
+                                            sizeof(char)));
+            if (!commHeader->dataToTransfer)
+            {
+                throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+            }
 
-        if (commHeader->dataToTransfer)
-        {
-            free(commHeader->dataToTransfer);
-            commHeader->dataToTransfer = NULL;
+            strcpy(commHeader->dataToTransfer, screens[*currentScreen].uiScreen.msg);
+            commHeader->isMoreComm = 0;
         }
-        commHeader->messageLen = strlen(screens->uiScreen.msg);
-        commHeader->dataToTransfer = static_cast<char*>(calloc(commHeader->messageLen + 1,
-                                        sizeof(char)));
-        if (!commHeader->dataToTransfer)
+        else if(E_STR == screens[*currentScreen].uiScreen.expectedInput)
         {
-            throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
-        }
+            if (E_STOCK_DATA_TRANSFER == commHeader->commType)
+            {
+                *currentScreen = serverGetData(commHeader->dataToTransfer);
+            }
+            else if (E_BUY == commHeader->commType)
+            {
+                *currentScreen = buyStock(commHeader->dataToTransfer);
+            }
+            else if (E_SELL == commHeader->commType)
+            {
+                *currentScreen = sellStock(commHeader->dataToTransfer);
+            }
 
-        strcpy(commHeader->dataToTransfer, screens->uiScreen.msg);
-        commHeader->commType = UI_TRANSFER;
+            commHeader->isMoreComm = 0;
+
+            if (commHeader->dataToTransfer)
+            {
+                free(commHeader->dataToTransfer);
+                commHeader->dataToTransfer = NULL;
+            }
+            commHeader->messageLen = strlen(screens[*currentScreen].uiScreen.msg);
+            commHeader->dataToTransfer = static_cast<char*>(calloc(commHeader->messageLen + 1,
+                                            sizeof(char)));
+            if (!commHeader->dataToTransfer)
+            {
+                throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+            }
+
+            strcpy(commHeader->dataToTransfer, screens[*currentScreen].uiScreen.msg);
+            commHeader->commType = E_UI_TRANSFER;
+        }
     }
 
     void ControlServer::getAndProcessUserInput() throw()
@@ -150,8 +190,6 @@ namespace autoTrader
         }
 
         processUserInput(commHeader, &currentScreen, sock_new);
-
-        sendDataToClient();
     }
 
     static void writeAll(char *buf, size_t bytesToWrite, int sockFd)
@@ -159,12 +197,12 @@ namespace autoTrader
         ssize_t bytesWrote = 0;
         while (bytesToWrite > 0)
         {
-            cout << "ControlClient::readDataFromServer bytesToWrite is " << bytesToWrite << endl;
+            cout << "ControlServer::writeAll bytesToWrite is " << bytesToWrite << endl;
             bytesWrote = write(sockFd, buf, bytesToWrite);
-            cout << "ControlClient::readDataFromServer bytes_read is " << bytesWrote << endl;
+            cout << "ControlServer::writeAll bytesWrote is " << bytesWrote << endl;
             if (-1 == bytesWrote)
             {
-                cout << "ControlClient::readDataFromServer - Error reading string from socket" << endl;
+                cout << "ControlServer::writeAll - Error reading string from socket" << endl;
                 throw CLIENT_EXCEPTION(CLIENT_SOCKET_READ_ERR);
             }
             
@@ -175,11 +213,18 @@ namespace autoTrader
 
 	void ControlServer::sendDataToClient(ClientServerComm *commHeader) throw()
 	{
+        char *tempBuf = reinterpret_cast<char*>(calloc(sizeof(ClientServerComm) - sizeof(char*) + commHeader->messageLen, sizeof(char)));
         log->LOG("ControlServer::sendDataToClient");
 
-        writeAll(reinterpret_cast<char*>(commHeader), 
+        if (!tempBuf)
+        {
+            throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
+        }
+        commHeader->serialize(tempBuf);
+        writeAll(tempBuf, 
                     sizeof(ClientServerComm) - sizeof(char*) + commHeader->messageLen, sock_new);
-	}
+        free(tempBuf);
+    }
 
     void ControlServer::sendDataToClient() throw()
 	{
@@ -203,5 +248,11 @@ namespace autoTrader
             throw SERVER_EXCEPTION(SERVER_ALLOCATION_ERR);
         }
         strcpy(commHeader->dataToTransfer, data);
+        commHeader->messageLen = strlen(data);
+    }
+
+    void ControlServer::setIsMoreComm(int inIsMoreComm)
+    {
+        commHeader->isMoreComm = inIsMoreComm;
     }
 }//namespace autoTrader
